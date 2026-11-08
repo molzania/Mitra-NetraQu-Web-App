@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mitra NetraQu - Jasa Pijat Terapis Tuna Netra Palembang</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            netraBlue: '#0D5C91',
+            netraBlueLight: '#E6F2FA',
+            netraGreen: '#4C9A2A',
+            netraGreenLight: '#EAF6E5',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start bg-slate-100">
+
+  <!-- App Container (Mobile First Responsive) -->
+  <div id="app" class="w-full max-w-md min-h-screen bg-white shadow-xl flex flex-col relative overflow-hidden"></div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium hidden z-50 transition-all"></div>
+
+  <script>
+    // --- KONSTANTA & KATALOG LAYANAN ---
+    const ADMIN_PHONE = "081212345678";
+    const ADMIN_PASS = "198006";
+    const MAX_PARTICIPANTS = 3;
+    const OUTLET_ADDRESS = "Jalan Sukahati No. 90 Palembang";
+    const TRANSPORT_FEE = 100000;
+
+    const SERVICES = [
+      { id: "srv_body", name: "Pijat Seluruh Tubuh (Full Body)", rate: 100000, desc: "Relaksasi menyeluruh oleh terapis tuna netra profesional." },
+      { id: "srv_back_hand", name: "Pijat Punggung + Tangan", rate: 75000, desc: "Fokus meredakan pegal area punggung, bahu, dan lengan." },
+      { id: "srv_back_foot", name: "Pijat Punggung + Kaki", rate: 75000, desc: "Kombinasi pijat punggung dan refleksi kaki." },
+      { id: "srv_head", name: "Pijat Kepala", rate: 50000, desc: "Meredakan pusing, stres, dan ketegangan otot kepala." },
+      { id: "srv_hand", name: "Pijat Tangan", rate: 50000, desc: "Melancarkan peredaran darah area tangan dan jari." },
+      { id: "srv_foot", name: "Pijat Kaki", rate: 50000, desc: "Refleksi titik saraf kaki untuk kebugaran tubuh." }
+    ];
+
+    const TIME_SLOTS = [
+      "09.00 WIB", "10.00 WIB", "11.00 WIB", "12.00 WIB",
+      "13.00 WIB", "14.00 WIB", "15.00 WIB", "16.00 WIB",
+      "17.00 WIB", "18.00 WIB", "19.00 WIB"
+    ];
+
+    const ORDER_STATUSES = [
+      { code: "PENDING_CONFIRMATION", label: "Menunggu Dikonfirmasi", step: "1/7", bg: "bg-orange-100", text: "text-orange-800" },
+      { code: "CONFIRMED", label: "Dikonfirmasi", step: "2/7", bg: "bg-blue-100", text: "text-blue-800" },
+      { code: "WAITING_PAYMENT", label: "Menunggu Pembayaran", step: "3/7", bg: "bg-purple-100", text: "text-purple-800" },
+      { code: "PAYMENT_COMPLETED", label: "Pembayaran Lunas", step: "4/7", bg: "bg-teal-100", text: "text-teal-800" },
+      { code: "THERAPIST_CONFIRMATION", label: "Konfirmasi Terapis", step: "5/7", bg: "bg-sky-100", text: "text-sky-800" },
+      { code: "THERAPIST_ON_THE_WAY", label: "Terapis On The Way", step: "6/7", bg: "bg-amber-100", text: "text-amber-800" },
+      { code: "COMPLETED", label: "Pesanan Selesai", step: "7/7", bg: "bg-green-100", text: "text-green-800" }
+    ];
+
+    // --- STATE APLIKASI ---
+    let state = {
+      screen: "auth", // "auth" | "customer" | "admin"
+      authTab: 0, // 0: No HP + PIN, 1: Google
+      isRegister: false,
+      customerTab: 0, // 0: Pesan, 1: Riwayat, 2: Profil
+      adminTab: 0, // 0: Pesanan Masuk, 1: Data Pengguna
+      adminDateFilter: "ALL", // "ALL" | "TODAY" | "SPECIFIC"
+      adminSpecificDate: "",
+      adminSearch: "",
+      ttsEnabled: false,
+      currentUser: JSON.parse(localStorage.getItem("mnq_current_user") || "null"),
+      csWhatsApp: localStorage.getItem("mnq_cs_wa") || "6281278901234",
+      booking: {
+        services: { "srv_body": 1 },
+        maleCount: 1,
+        femaleCount: 0,
+        bookingDate: new Date().toISOString().split("T")[0],
+        timeSlot: "09.00 WIB",
+        locationType: "Datang ke Lokasi Pijat",
+        customAddress: ""
+      }
+    };
+
+    // Inisialisasi Data Contoh bila kosong
+    if (!localStorage.getItem("mnq_orders")) {
+      const todayIso = new Date().toISOString().split("T")[0];
+      const initialOrders = [
+        {
+          orderId: "MNQ-20261102-1081",
+          customerName: "Bpk. Hendra Wijaya",
+          customerPhone: "081271829911",
+          bookingDate: todayIso,
+          timeSlot: "09.00 WIB",
+          servicesSummary: "Pijat Seluruh Tubuh (1 Jam)",
+          maleCount: 1,
+          femaleCount: 0,
+          totalParticipants: 1,
+          locationType: "Panggilan ke Rumah",
+          serviceAddress: "Jl. Sudirman No. 45, Ilir Timur I, Palembang",
+          totalPayment: 200000,
+          status: "PENDING_CONFIRMATION"
+        },
+        {
+          orderId: "MNQ-20261102-1082",
+          customerName: "Ibu Siti Nurhaliza",
+          customerPhone: "082199887766",
+          bookingDate: todayIso,
+          timeSlot: "13.00 WIB",
+          servicesSummary: "Pijat Seluruh Tubuh (2 Jam)",
+          maleCount: 0,
+          femaleCount: 2,
+          totalParticipants: 2,
+          locationType: "Datang ke Lokasi Pijat",
+          serviceAddress: OUTLET_ADDRESS,
+          totalPayment: 400000,
+          status: "CONFIRMED"
+        }
+      ];
+      localStorage.setItem("mnq_orders", JSON.stringify(initialOrders));
+    }
+
+    if (!localStorage.getItem("mnq_users")) {
+      const initialUsers = [
+        {
+          fullName: "Bpk. Hendra Wijaya",
+          phone: "081271829911",
+          pin: "123456",
+          gender: "Laki-laki",
+          email: "hendra.wijaya@gmail.com",
+          address: "Jl. Sudirman No. 45, Ilir Timur I, Palembang",
+          photoUri: ""
+        },
+        {
+          fullName: "Ibu Siti Nurhaliza",
+          phone: "082199887766",
+          pin: "123456",
+          gender: "Perempuan",
+          email: "sitinurhaliza.plg@gmail.com",
+          address: "Jl. Demang Lebar Daun No. 88, Palembang",
+          photoUri: ""
+        }
+      ];
+      localStorage.setItem("mnq_users", JSON.stringify(initialUsers));
+    }
+
+    if (state.currentUser) {
+      state.screen = state.currentUser.isAdmin ? "admin" : "customer";
+    }
+
+    // --- HELPER FUNCTIONS ---
+    function formatRupiah(num) {
+      return "Rp " + Number(num).toLocaleString("id-ID");
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      if (state.ttsEnabled) speakText(msg);
+      setTimeout(() => el.classList.add("hidden"), 2800);
+    }
+
+    function copyText(text, label = "Teks") {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(label + " berhasil disalin ke clipboard");
+      });
+    }
+
+    function speakText(text) {
+      if (!("speechSynthesis" in window)) {
+        alert("Browser ini tidak mendukung fitur suara Text-To-Speech.");
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "id-ID";
+      utter.rate = 0.98;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem("mnq_orders") || "[]");
+    }
+
+    function saveOrders(list) {
+      localStorage.setItem("mnq_orders", JSON.stringify(list));
+    }
+
+    function getUsers() {
+      return JSON.parse(localStorage.getItem("mnq_users") || "[]");
+    }
+
+    function saveUsers(list) {
+      localStorage.setItem("mnq_users", JSON.stringify(list));
+    }
+
+    function getStatusObj(code) {
+      return ORDER_STATUSES.find(s => s.code === code) || ORDER_STATUSES[0];
+    }
+
+    // --- RENDER ENGINE ---
+    function render() {
+      const app = document.getElementById("app");
+      if (state.screen === "auth") {
+        app.innerHTML = renderAuthScreen();
+      } else if (state.screen === "admin") {
+        app.innerHTML = renderAdminScreen();
+      } else {
+        app.innerHTML = renderCustomerScreen();
+      }
+    }
+
+    // 1. HALAMAN LOGIN (Background Pijat Transparansi 50%)
+    function renderAuthScreen() {
+      return `
+        <div class="relative min-h-screen flex flex-col justify-center items-center p-5">
+          <!-- Background Image 50% Opacity -->
+          <img
+            src="assets/aistudio/pexels-larysa-stratiichuk-1606923648-29821658_37a2d73e.jpg"
+            alt=""
+            class="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none"
+          />
+
+          <div class="relative z-10 w-full flex flex-col items-center">
+            <!-- Logo Card -->
+            <div class="bg-white/95 border border-netraBlue/25 rounded-2xl shadow-md px-5 py-3 mb-5 w-11/12 flex justify-center">
+              <img
+                src="assets/aistudio/logo_mitranetraqu_b042a1af.jpeg"
+                alt="Logo Mitra NetraQu"
+                class="h-28 object-contain"
+              />
+            </div>
+
+            <!-- Tabs -->
+            <div class="grid grid-cols-2 w-full bg-netraBlueLight/90 rounded-xl p-1 mb-4 shadow-sm">
+              <button onclick="setAuthTab(0)" class="py-2.5 rounded-lg text-sm font-bold transition ${state.authTab === 0 ? 'bg-netraBlue text-white shadow' : 'text-netraBlue'}">
+                📱 No. HP + PIN
+              </button>
+              <button onclick="setAuthTab(1)" class="py-2.5 rounded-lg text-sm font-bold transition ${state.authTab === 1 ? 'bg-netraBlue text-white shadow' : 'text-netraBlue'}">
+                🌐 Akun Google
+              </button>
+            </div>
+
+            ${state.authTab === 0 ? `
+              <div class="bg-white/95 border border-slate-200 rounded-2xl shadow-md p-5 w-full">
+                <div class="flex justify-between items-center mb-3">
+                  <h2 class="text-base font-bold text-netraBlue">
+                    ${state.isRegister ? 'Daftar Akun Pelanggan' : 'Masuk Akun No. HP'}
+                  </h2>
+                  <button onclick="toggleRegisterMode()" class="text-xs font-bold text-netraGreen underline">
+                    ${state.isRegister ? 'Sudah ada akun? Masuk' : 'Daftar Akun Baru'}
+                  </button>
+                </div>
+
+                ${!state.isRegister ? `
+                  <div class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor WhatsApp / HP</label>
+                      <input id="loginPhone" type="tel" placeholder="Contoh: 081234567890" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-netraBlue" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">PIN / Password</label>
+                      <input id="loginPin" type="password" placeholder="Masukkan PIN atau Password" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-netraBlue" />
+                    </div>
+                    <button onclick="handlePhoneLogin()" class="w-full bg-netraBlue hover:bg-sky-800 text-white font-bold py-3 rounded-xl shadow transition">
+                      Masuk Sekarang
+                    </button>
+                  </div>
+                ` : `
+                  <div class="space-y-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap</label>
+                      <input id="regName" type="text" placeholder="Nama lengkap Anda" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor WhatsApp / HP</label>
+                      <input id="regPhone" type="tel" placeholder="Contoh: 081234567890" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Buat PIN (4-6 Digit)</label>
+                      <input id="regPin" type="password" maxlength="6" placeholder="Contoh: 123456" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Kelamin (Untuk Penugasan Terapis)</label>
+                      <select id="regGender" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm bg-white">
+                        <option value="Laki-laki">Laki-laki (Terapis Pria)</option>
+                        <option value="Perempuan">Perempuan (Terapis Wanita)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Domisili Palembang</label>
+                      <textarea id="regAddress" rows="2" placeholder="Nama jalan, kelurahan, kecamatan di Palembang" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm"></textarea>
+                    </div>
+                    <button onclick="handlePhoneRegister()" class="w-full bg-netraGreen hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow transition">
+                      Daftar Akun Sekarang
+                    </button>
+                  </div>
+                `}
+              </div>
+            ` : `
+              <div class="bg-white/95 border border-slate-200 rounded-2xl shadow-md p-5 w-full text-center space-y-3">
+                <h3 class="text-base font-bold text-netraBlue">Masuk Cepat dengan Google</h3>
+                <p class="text-xs text-slate-600">Masuk dengan satu ketukan menggunakan akun Google Anda untuk memesan layanan terapis pijat tuna netra.</p>
+                <button onclick="handleGoogleQuickLogin()" class="w-full bg-netraBlue hover:bg-sky-800 text-white font-bold py-3 rounded-xl shadow flex items-center justify-center gap-2">
+                  <span>Lanjutkan dengan Google</span>
+                </button>
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. HALAMAN PELANGGAN (PESAN, RIWAYAT, PROFIL)
+    function renderCustomerScreen() {
+      const summaryText = state.customerTab === 0
+        ? "Halaman Pemesanan Layanan Mitra NetraQu. Pilih layanan pijat tuna netra, komposisi peserta maksimal 3 orang, jadwal waktu, dan lokasi layanan."
+        : state.customerTab === 1
+        ? "Halaman Riwayat Pesanan Anda. Berisi daftar pemesanan terapis pijat beserta status terkini."
+        : "Halaman Profil Pengguna dan Pengaturan Aksesibilitas Mitra NetraQu.";
+
+      return `
+        <!-- Floating Screen Reader Bar -->
+        <div class="bg-netraBlue text-white px-4 py-2.5 flex items-center justify-between text-xs shadow">
+          <div class="flex items-center gap-2">
+            <span>🔊 <strong>Pembaca Layar (TTS)</strong></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="speakText('${summaryText}')" class="bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-lg font-semibold">
+              Bacakan Layar
+            </button>
+            <button onclick="window.speechSynthesis && window.speechSynthesis.cancel()" class="bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg">
+              Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 pb-24">
+          ${state.customerTab === 0 ? renderBookingTab() : state.customerTab === 1 ? renderHistoryTab() : renderProfileTab()}
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 grid grid-cols-3 py-2 z-30">
+          <button onclick="setCustomerTab(0)" class="flex flex-col items-center py-1 ${state.customerTab === 0 ? 'text-netraBlue font-bold' : 'text-slate-500'}">
+            <span class="text-lg">💆‍♂️</span>
+            <span class="text-xs">Pesan</span>
+          </button>
+          <button onclick="setCustomerTab(1)" class="flex flex-col items-center py-1 ${state.customerTab === 1 ? 'text-netraBlue font-bold' : 'text-slate-500'}">
+            <span class="text-lg">📋</span>
+            <span class="text-xs">Riwayat</span>
+          </button>
+          <button onclick="setCustomerTab(2)" class="flex flex-col items-center py-1 ${state.customerTab === 2 ? 'text-netraBlue font-bold' : 'text-slate-500'}">
+            <span class="text-lg">👤</span>
+            <span class="text-xs">Profil</span>
+          </button>
+        </div>
+      `;
+    }
+
+    function renderBookingTab() {
+      const b = state.booking;
+      const totalParticipants = b.maleCount + b.femaleCount;
+      let costPerPerson = 0;
+      Object.entries(b.services).forEach(([id, dur]) => {
+        const s = SERVICES.find(x => x.id === id);
+        if (s) costPerPerson += s.rate * dur;
+      });
+      const serviceCost = costPerPerson * totalParticipants;
+      const transport = b.locationType === "Panggilan ke Rumah" ? TRANSPORT_FEE : 0;
+      const totalPayment = serviceCost + transport;
+
+      return `
+        <div class="space-y-4">
+          <!-- Header Banner -->
+          <div class="bg-netraBlueLight border border-netraBlue/20 rounded-2xl p-4 flex items-center gap-3">
+            <img src="assets/aistudio/mitranetraqu_9e70e9c3.jpeg" class="w-14 h-14 rounded-full object-cover bg-white p-1 border border-netraBlue/30" />
+            <div>
+              <h1 class="font-bold text-netraBlue text-base">Mitra NetraQu Palembang</h1>
+              <p class="text-xs text-slate-600">Layanan Terapis Pijat Tuna Netra Bersertifikat (Senin–Sabtu, 09.00–20.00 WIB)</p>
+            </div>
+          </div>
+
+          <!-- 1. Pilih Layanan -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+            <h2 class="font-bold text-sm text-netraBlue">1. Pilih Layanan & Durasi Pijat</h2>
+            ${SERVICES.map(s => {
+              const selectedDur = b.services[s.id];
+              return `
+                <div class="border ${selectedDur ? 'border-netraBlue bg-netraBlueLight/40' : 'border-slate-200'} rounded-xl p-3 transition">
+                  <div class="flex justify-between items-start">
+                    <label class="flex items-start gap-2.5 cursor-pointer flex-1">
+                      <input type="checkbox" ${selectedDur ? 'checked' : ''} onchange="toggleService('${s.id}')" class="mt-1 accent-netraBlue w-4 h-4" />
+                      <div>
+                        <div class="font-bold text-sm text-slate-800">${s.name}</div>
+                        <div class="text-xs text-netraGreen font-semibold">${formatRupiah(s.rate)} / Jam</div>
+                        <div class="text-xs text-slate-500 mt-0.5">${s.desc}</div>
+                      </div>
+                    </label>
+                  </div>
+                  ${selectedDur ? `
+                    <div class="mt-2.5 pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
+                      <span class="font-semibold text-slate-700">Durasi Layanan:</span>
+                      <div class="flex gap-2">
+                        <button onclick="setServiceDur('${s.id}', 1)" class="px-3 py-1 rounded-lg font-bold ${selectedDur === 1 ? 'bg-netraBlue text-white' : 'bg-slate-200 text-slate-700'}">1 Jam</button>
+                        <button onclick="setServiceDur('${s.id}', 2)" class="px-3 py-1 rounded-lg font-bold ${selectedDur === 2 ? 'bg-netraBlue text-white' : 'bg-slate-200 text-slate-700'}">2 Jam</button>
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          <!-- 2. Jumlah Peserta (Maksimal 3 Orang) -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+            <div class="flex justify-between items-center">
+              <h2 class="font-bold text-sm text-netraBlue">2. Komposisi Peserta</h2>
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-netraGreenLight text-netraGreen">Maks. ${MAX_PARTICIPANTS} Orang</span>
+            </div>
+            <p class="text-xs text-slate-500">Sesuai etika layanan: Peserta laki-laki ditangani Terapis Pria, peserta perempuan ditangani Terapis Wanita.</p>
+
+            <div class="flex items-center justify-between border border-slate-200 rounded-xl p-3">
+              <div>
+                <div class="text-sm font-bold">Peserta Laki-laki</div>
+                <div class="text-xs text-slate-500">Terapis Pria</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <button onclick="updateParticipant('male', -1)" class="w-9 h-9 rounded-lg bg-slate-200 font-bold text-lg">-</button>
+                <span class="font-bold text-base w-5 text-center">${b.maleCount}</span>
+                <button onclick="updateParticipant('male', 1)" class="w-9 h-9 rounded-lg bg-netraBlue text-white font-bold text-lg">+</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between border border-slate-200 rounded-xl p-3">
+              <div>
+                <div class="text-sm font-bold">Peserta Perempuan</div>
+                <div class="text-xs text-slate-500">Terapis Wanita</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <button onclick="updateParticipant('female', -1)" class="w-9 h-9 rounded-lg bg-slate-200 font-bold text-lg">-</button>
+                <span class="font-bold text-base w-5 text-center">${b.femaleCount}</span>
+                <button onclick="updateParticipant('female', 1)" class="w-9 h-9 rounded-lg bg-netraGreen text-white font-bold text-lg">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Jadwal & Lokasi -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+            <h2 class="font-bold text-sm text-netraBlue">3. Jadwal & Lokasi Layanan</h2>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Layanan (Senin - Sabtu)</label>
+              <input type="date" value="${b.bookingDate}" onchange="state.booking.bookingDate = this.value; render();" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Jam Mulai</label>
+              <div class="grid grid-cols-3 gap-2">
+                ${TIME_SLOTS.map(slot => `
+                  <button onclick="state.booking.timeSlot = '${slot}'; render();" class="py-2 rounded-lg text-xs font-bold border ${b.timeSlot === slot ? 'bg-netraBlue text-white border-netraBlue' : 'bg-slate-50 text-slate-700 border-slate-200'}">
+                    ${slot}
+                  </button>
+                `).join("")}
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Pilihan Lokasi Pijat</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="state.booking.locationType = 'Datang ke Lokasi Pijat'; render();" class="p-2.5 rounded-xl text-xs font-bold border ${b.locationType === 'Datang ke Lokasi Pijat' ? 'bg-netraBlueLight border-netraBlue text-netraBlue' : 'border-slate-200 text-slate-600'}">
+                  🏠 Datang ke Outlet<br/><span class="font-normal text-[11px]">Gratis Transport</span>
+                </button>
+                <button onclick="state.booking.locationType = 'Panggilan ke Rumah'; render();" class="p-2.5 rounded-xl text-xs font-bold border ${b.locationType === 'Panggilan ke Rumah' ? 'bg-netraGreenLight border-netraGreen text-netraGreen' : 'border-slate-200 text-slate-600'}">
+                  🛵 Panggilan Rumah<br/><span class="font-normal text-[11px]">+Rp 100.000 PP</span>
+                </button>
+              </div>
+            </div>
+
+            ${b.locationType === "Datang ke Lokasi Pijat" ? `
+              <div class="bg-slate-50 p-3 rounded-xl text-xs text-slate-700 border border-slate-200">
+                <strong>Alamat Outlet:</strong> ${OUTLET_ADDRESS}
+              </div>
+            ` : `
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Rumah / Hotel Tujuan</label>
+                <textarea onchange="state.booking.customAddress = this.value" rows="2" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm" placeholder="Masukkan alamat lengkap di Palembang">${b.customAddress || state.currentUser.address || ''}</textarea>
+              </div>
+            `}
+          </div>
+
+          <!-- 4. Ringkasan Biaya & Submit -->
+          <div class="bg-netraBlueLight/60 border border-netraBlue/30 rounded-2xl p-4 space-y-2">
+            <div class="flex justify-between text-xs text-slate-600">
+              <span>Biaya Layanan (${totalParticipants} Orang)</span>
+              <span class="font-semibold">${formatRupiah(serviceCost)}</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-600">
+              <span>Biaya Transportasi Terapis</span>
+              <span class="font-semibold">${formatRupiah(transport)}</span>
+            </div>
+            <div class="border-t border-netraBlue/20 pt-2 flex justify-between items-center">
+              <span class="font-bold text-sm text-netraBlue">Total Pembayaran</span>
+              <span class="font-extrabold text-base text-netraGreen">${formatRupiah(totalPayment)}</span>
+            </div>
+            <button onclick="submitBookingOrder()" class="w-full mt-3 bg-netraGreen hover:bg-green-700 text-white font-bold py-3.5 rounded-xl shadow-md transition">
+              Pesan & Konfirmasi ke WhatsApp CS
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHistoryTab() {
+      const myOrders = getOrders().filter(o => o.customerPhone === state.currentUser.phone);
+      if (myOrders.length === 0) {
+        return `
+          <div class="text-center py-16 space-y-2">
+            <div class="text-4xl">📋</div>
+            <h3 class="font-bold text-base text-slate-800">Belum Ada Riwayat Pesanan</h3>
+            <p class="text-xs text-slate-500">Pesanan terapis pijat yang Anda buat akan muncul di sini.</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="space-y-3">
+          <h2 class="font-bold text-base text-netraBlue">Riwayat Pesanan Anda</h2>
+          ${myOrders.map(o => {
+            const st = getStatusObj(o.status);
+            return `
+              <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-sm text-netraBlue">${o.orderId}</span>
+                  <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${st.bg} ${st.text}">
+                    ${st.label} (${st.step})
+                  </span>
+                </div>
+                <div class="text-xs text-slate-700">📅 ${o.bookingDate} • ${o.timeSlot}</div>
+                <div class="text-xs text-slate-600">💆 ${o.servicesSummary}</div>
+                <div class="text-xs text-slate-600">👥 ${o.totalParticipants} Peserta (${o.maleCount} Pria, ${o.femaleCount} Wanita)</div>
+                <div class="text-xs text-slate-600">📍 ${o.locationType} (${o.serviceAddress})</div>
+                <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+                  <span class="font-bold text-sm text-netraGreen">${formatRupiah(o.totalPayment)}</span>
+                  <div class="flex gap-2">
+                    <button onclick="copyText('${o.orderId} - ${o.servicesSummary} - ${formatRupiah(o.totalPayment)}', 'Rincian pesanan')" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold">
+                      Salin
+                    </button>
+                    <button onclick="openWhatsAppForOrder('${o.orderId}')" class="px-3 py-1.5 bg-netraGreen text-white rounded-lg text-xs font-bold">
+                      Kirim WA
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderProfileTab() {
+      const u = state.currentUser;
+      const avatarSrc = u.photoUri || "assets/aistudio/mitranetraqu_9e70e9c3.jpeg";
+      return `
+        <div class="space-y-4">
+          <!-- Kartu Profil & Foto -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col items-center text-center">
+            <img src="${avatarSrc}" class="w-24 h-24 rounded-full object-cover border-2 border-netraBlue mb-2" />
+            <label class="cursor-pointer text-xs font-bold text-netraBlue underline mb-2">
+              📷 Ganti Foto Profil
+              <input type="file" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)" />
+            </label>
+            <h2 class="font-bold text-lg text-netraBlue">${u.fullName}</h2>
+            <p class="text-xs text-slate-500">${u.phone}</p>
+
+            <!-- Ubah Jenis Kelamin -->
+            <div class="mt-3 flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-600">Jenis Kelamin:</span>
+              <select onchange="updateUserGender(this.value)" class="text-xs font-bold border border-netraBlue/40 rounded-full px-3 py-1 bg-netraBlueLight text-netraBlue">
+                <option value="Laki-laki" ${u.gender === 'Laki-laki' ? 'selected' : ''}>Laki-laki</option>
+                <option value="Perempuan" ${u.gender === 'Perempuan' ? 'selected' : ''}>Perempuan</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Info Kontak dengan Tombol Copy -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2.5 text-xs">
+            <div class="font-bold text-sm text-netraBlue mb-1">Informasi Pelanggan (Bisa Copy-Paste)</div>
+            <div class="flex justify-between items-center">
+              <div><span class="text-slate-500">Nomor HP:</span> <strong>${u.phone}</strong></div>
+              <button onclick="copyText('${u.phone}', 'Nomor HP')" class="text-netraBlue font-bold">Salin</button>
+            </div>
+            <div class="flex justify-between items-center">
+              <div><span class="text-slate-500">Alamat:</span> <strong>${u.address}</strong></div>
+              <button onclick="copyText('${u.address}', 'Alamat')" class="text-netraBlue font-bold">Salin</button>
+            </div>
+          </div>
+
+          <button onclick="logout()" class="w-full border border-red-500 text-red-600 font-bold py-3 rounded-xl text-sm">
+            Keluar dari Akun
+          </button>
+        </div>
+      `;
+    }
+
+    // 3. HALAMAN DASHBOARD ADMINISTRATOR (No HP: 081212345678, Pass: 198006)
+    function renderAdminScreen() {
+      const allOrders = getOrders();
+      const allUsers = getUsers();
+      const todayIso = new Date().toISOString().split("T")[0];
+
+      const filteredOrders = allOrders.filter(o => {
+        if (state.adminDateFilter === "TODAY" && o.bookingDate !== todayIso) return false;
+        if (state.adminDateFilter === "SPECIFIC" && state.adminSpecificDate && o.bookingDate !== state.adminSpecificDate) return false;
+        if (state.adminSearch) {
+          const q = state.adminSearch.toLowerCase();
+          return (
+            o.customerName.toLowerCase().includes(q) ||
+            o.customerPhone.includes(q) ||
+            o.orderId.toLowerCase().includes(q)
+          );
+        }
+        return true;
+      });
+
+      const totalRevenue = filteredOrders.reduce((acc, o) => acc + Number(o.totalPayment || 0), 0);
+
+      return `
+        <div class="bg-netraBlue text-white p-4 flex justify-between items-center shadow">
+          <div>
+            <h1 class="font-bold text-base">Dashboard Administrator</h1>
+            <p class="text-[11px] text-white/80">Mitra NetraQu Palembang • Admin (${ADMIN_PHONE})</p>
+          </div>
+          <button onclick="logout()" class="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg text-xs font-bold">
+            Keluar
+          </button>
+        </div>
+
+        <div class="p-4 space-y-4 flex-1 overflow-y-auto">
+          <!-- Ringkasan Statistik -->
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-netraBlueLight p-3 rounded-xl border border-netraBlue/20">
+              <div class="text-[11px] text-slate-600">Pesanan Masuk</div>
+              <div class="text-lg font-extrabold text-netraBlue">${filteredOrders.length}</div>
+            </div>
+            <div class="bg-netraGreenLight p-3 rounded-xl border border-netraGreen/20">
+              <div class="text-[11px] text-slate-600">Total Transaksi</div>
+              <div class="text-xs font-extrabold text-netraGreen mt-1">${formatRupiah(totalRevenue)}</div>
+            </div>
+            <div class="bg-slate-100 p-3 rounded-xl border border-slate-200">
+              <div class="text-[11px] text-slate-600">Total Pengguna</div>
+              <div class="text-lg font-extrabold text-slate-800">${allUsers.length}</div>
+            </div>
+          </div>
+
+          <!-- Filter Tanggal & Pencarian -->
+          <div class="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
+            <div class="text-xs font-bold text-netraBlue">Filter Tanggal Pesanan:</div>
+            <div class="flex gap-1.5 flex-wrap">
+              <button onclick="state.adminDateFilter='ALL'; render();" class="px-2.5 py-1 rounded-lg text-xs font-bold ${state.adminDateFilter==='ALL' ? 'bg-netraBlue text-white' : 'bg-slate-100 text-slate-700'}">Semua</button>
+              <button onclick="state.adminDateFilter='TODAY'; render();" class="px-2.5 py-1 rounded-lg text-xs font-bold ${state.adminDateFilter==='TODAY' ? 'bg-netraBlue text-white' : 'bg-slate-100 text-slate-700'}">Hari Ini</button>
+              <input type="date" value="${state.adminSpecificDate}" onchange="state.adminDateFilter='SPECIFIC'; state.adminSpecificDate=this.value; render();" class="border border-slate-300 rounded-lg px-2 py-0.5 text-xs" />
+            </div>
+            <input type="text" placeholder="Cari nama, nomor HP, atau ID pesanan..." value="${state.adminSearch}" oninput="state.adminSearch=this.value; render();" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
+          </div>
+
+          <!-- Tab Switcher Admin -->
+          <div class="grid grid-cols-2 bg-slate-200 p-1 rounded-xl">
+            <button onclick="state.adminTab=0; render();" class="py-2 rounded-lg text-xs font-bold ${state.adminTab===0 ? 'bg-white text-netraBlue shadow' : 'text-slate-600'}">
+              📦 Pesanan Masuk (${filteredOrders.length})
+            </button>
+            <button onclick="state.adminTab=1; render();" class="py-2 rounded-lg text-xs font-bold ${state.adminTab===1 ? 'bg-white text-netraBlue shadow' : 'text-slate-600'}">
+              👥 Data Pengguna (${allUsers.length})
+            </button>
+          </div>
+
+          ${state.adminTab === 0 ? `
+            <div class="space-y-3">
+              ${filteredOrders.map(o => {
+                const st = getStatusObj(o.status);
+                return `
+                  <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <span class="font-bold text-sm text-netraBlue">${o.orderId}</span>
+                        <div class="text-xs font-bold text-slate-800">${o.customerName} (${o.customerPhone})</div>
+                      </div>
+                      <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${st.bg} ${st.text}">
+                        ${st.label} (${st.step})
+                      </span>
+                    </div>
+                    <div class="text-xs text-slate-600">📅 ${o.bookingDate} • ${o.timeSlot}</div>
+                    <div class="text-xs text-slate-600">💆 ${o.servicesSummary} (${o.totalParticipants} Orang)</div>
+                    <div class="text-xs text-slate-600">📍 ${o.locationType}: ${o.serviceAddress}</div>
+                    <div class="text-xs font-bold text-netraGreen">${formatRupiah(o.totalPayment)}</div>
+
+                    <!-- Kontrol Ubah 7 Status Pesanan Khusus Admin -->
+                    <div class="pt-2 border-t border-slate-100">
+                      <label class="block text-[11px] font-bold text-netraBlue mb-1">Ubah Status Pesanan (Khusus Admin):</label>
+                      <select onchange="adminChangeOrderStatus('${o.orderId}', this.value)" class="w-full border border-netraBlue/40 rounded-xl px-3 py-2 text-xs font-bold bg-netraBlueLight/40 text-slate-800">
+                        ${ORDER_STATUSES.map(s => `
+                          <option value="${s.code}" ${o.status === s.code ? 'selected' : ''}>
+                            ${s.step} - ${s.label}
+                          </option>
+                        `).join("")}
+                      </select>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          ` : `
+            <div class="space-y-2.5">
+              ${allUsers.map(u => `
+                <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-sm flex justify-between items-center">
+                  <div class="text-xs space-y-0.5">
+                    <div class="font-bold text-sm text-netraBlue">${u.fullName}</div>
+                    <div class="text-slate-600">📱 ${u.phone} • ${u.gender}</div>
+                    <div class="text-slate-500">📍 ${u.address}</div>
+                  </div>
+                  <button onclick="copyText('${u.fullName} - ${u.phone} - ${u.address}', 'Data pengguna')" class="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-bold text-netraBlue">
+                    Salin
+                  </button>
+                </div>
+              `).join("")}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    // --- EVENT HANDLERS ---
+    function setAuthTab(idx) {
+      state.authTab = idx;
+      render();
+    }
+
+    function toggleRegisterMode() {
+      state.isRegister = !state.isRegister;
+      render();
+    }
+
+    function setCustomerTab(idx) {
+      state.customerTab = idx;
+      render();
+    }
+
+    function handlePhoneLogin() {
+      const phone = document.getElementById("loginPhone").value.trim();
+      const pin = document.getElementById("loginPin").value.trim();
+
+      if (phone === ADMIN_PHONE && pin === ADMIN_PASS) {
+        state.currentUser = { fullName: "Administrator Mitra NetraQu", phone: ADMIN_PHONE, isAdmin: true };
+        localStorage.setItem("mnq_current_user", JSON.stringify(state.currentUser));
+        state.screen = "admin";
+        showToast("Selamat datang di Dashboard Administrator");
+        render();
+        return;
+      }
+
+      if (phone === ADMIN_PHONE && pin !== ADMIN_PASS) {
+        showToast("Password Administrator salah!");
+        return;
+      }
+
+      const users = getUsers();
+      const found = users.find(u => u.phone === phone && u.pin === pin);
+      if (found) {
+        state.currentUser = found;
+        localStorage.setItem("mnq_current_user", JSON.stringify(found));
+        state.screen = "customer";
+        showToast("Berhasil masuk sebagai " + found.fullName);
+        render();
+      } else {
+        showToast("Nomor HP atau PIN tidak ditemukan. Silakan Daftar Akun Baru.");
+      }
+    }
+
+    function handlePhoneRegister() {
+      const fullName = document.getElementById("regName").value.trim();
+      const phone = document.getElementById("regPhone").value.trim();
+      const pin = document.getElementById("regPin").value.trim();
+      const gender = document.getElementById("regGender").value;
+      const address = document.getElementById("regAddress").value.trim();
+
+      if (!fullName || phone.length < 8 || pin.length < 4 || !address) {
+        showToast("Mohon lengkapi seluruh kolom pendaftaran dengan benar.");
+        return;
+      }
+
+      const newUser = { fullName, phone, pin, gender, address, email: "", photoUri: "" };
+      const users = getUsers().filter(u => u.phone !== phone);
+      users.unshift(newUser);
+      saveUsers(users);
+
+      state.currentUser = newUser;
+      localStorage.setItem("mnq_current_user", JSON.stringify(newUser));
+      state.screen = "customer";
+      showToast("Pendaftaran berhasil! Selamat datang, " + fullName);
+      render();
+    }
+
+    function handleGoogleQuickLogin() {
+      const users = getUsers();
+      const defaultUser = users[0];
+      state.currentUser = defaultUser;
+      localStorage.setItem("mnq_current_user", JSON.stringify(defaultUser));
+      state.screen = "customer";
+      showToast("Berhasil masuk dengan Akun Google");
+      render();
+    }
+
+    function toggleService(srvId) {
+      const cur = state.booking.services;
+      if (cur[srvId]) {
+        if (Object.keys(cur).length > 1) delete cur[srvId];
+      } else {
+        cur[srvId] = 1;
+      }
+      render();
+    }
+
+    function setServiceDur(srvId, dur) {
+      state.booking.services[srvId] = dur;
+      render();
+    }
+
+    function updateParticipant(type, delta) {
+      let m = state.booking.maleCount;
+      let f = state.booking.femaleCount;
+      if (type === "male") {
+        const nextM = m + delta;
+        if (nextM >= 0 && nextM + f <= MAX_PARTICIPANTS && (nextM + f >= 1)) state.booking.maleCount = nextM;
+      } else {
+        const nextF = f + delta;
+        if (nextF >= 0 && m + nextF <= MAX_PARTICIPANTS && (m + nextF >= 1)) state.booking.femaleCount = nextF;
+      }
+      render();
+    }
+
+    function submitBookingOrder() {
+      const b = state.booking;
+      const u = state.currentUser;
+      const totalParticipants = b.maleCount + b.femaleCount;
+      let costPerPerson = 0;
+      const summaryParts = [];
+      Object.entries(b.services).forEach(([id, dur]) => {
+        const s = SERVICES.find(x => x.id === id);
+        if (s) {
+          costPerPerson += s.rate * dur;
+          summaryParts.push(`${s.name} (${dur} Jam)`);
+        }
+      });
+      const serviceCost = costPerPerson * totalParticipants;
+      const transport = b.locationType === "Panggilan ke Rumah" ? TRANSPORT_FEE : 0;
+      const totalPayment = serviceCost + transport;
+      const orderId = "MNQ-" + b.bookingDate.replaceAll("-", "") + "-" + Math.floor(1000 + Math.random() * 9000);
+      const address = b.locationType === "Datang ke Lokasi Pijat" ? OUTLET_ADDRESS : (b.customAddress || u.address);
+
+      const newOrder = {
+        orderId,
+        customerName: u.fullName,
+        customerPhone: u.phone,
+        bookingDate: b.bookingDate,
+        timeSlot: b.timeSlot,
+        servicesSummary: summaryParts.join(", "),
+        maleCount: b.maleCount,
+        femaleCount: b.femaleCount,
+        totalParticipants,
+        locationType: b.locationType,
+        serviceAddress: address,
+        totalPayment,
+        status: "PENDING_CONFIRMATION"
+      };
+
+      const orders = getOrders();
+      orders.unshift(newOrder);
+      saveOrders(orders);
+
+      showToast("Pesanan " + orderId + " berhasil dibuat!");
+      openWhatsAppForOrder(orderId);
+      state.customerTab = 1;
+      render();
+    }
+
+    function openWhatsAppForOrder(orderId) {
+      const order = getOrders().find(o => o.orderId === orderId);
+      if (!order) return;
+      const msg = `Halo CS Mitra NetraQu Palembang, saya ingin konfirmasi pemesanan pijat:\n• No. Pesanan: ${order.orderId}\n• Nama Pemesan: ${order.customerName}\n• No. HP: ${order.customerPhone}\n• Jadwal: ${order.bookingDate} jam ${order.timeSlot}\n• Layanan: ${order.servicesSummary}\n• Peserta: ${order.maleCount} Pria, ${order.femaleCount} Wanita\n• Lokasi: ${order.locationType} (${order.serviceAddress})\n• Total Biaya: ${formatRupiah(order.totalPayment)}`;
+      window.open(`https://wa.me/${state.csWhatsApp}?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+
+    function adminChangeOrderStatus(orderId, newStatusCode) {
+      const orders = getOrders().map(o => o.orderId === orderId ? { ...o, status: newStatusCode } : o);
+      saveOrders(orders);
+      const st = getStatusObj(newStatusCode);
+      showToast(`Status pesanan ${orderId} diubah menjadi: ${st.label}`);
+      render();
+    }
+
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        state.currentUser.photoUri = evt.target.result;
+        localStorage.setItem("mnq_current_user", JSON.stringify(state.currentUser));
+        const users = getUsers().map(u => u.phone === state.currentUser.phone ? state.currentUser : u);
+        saveUsers(users);
+        showToast("Foto profil berhasil diperbarui");
+        render();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateUserGender(newGender) {
+      state.currentUser.gender = newGender;
+      localStorage.setItem("mnq_current_user", JSON.stringify(state.currentUser));
+      const users = getUsers().map(u => u.phone === state.currentUser.phone ? state.currentUser : u);
+      saveUsers(users);
+      showToast("Jenis kelamin diubah menjadi " + newGender);
+      render();
+    }
+
+    function logout() {
+      localStorage.removeItem("mnq_current_user");
+      state.currentUser = null;
+      state.screen = "auth";
+      render();
+    }
+
+    // Jalankan pertama kali
+    render();
+  </script>
+</body>
+</html>

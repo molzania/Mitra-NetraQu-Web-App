@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-netraBlue: #0D5C91;
+  --color-netraBlueLight: #E6F2FA;
+  --color-netraGreen: #4C9A2A;
+  --color-netraGreenLight: #EAF6E5;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #FFFFFF;
+  color: #0D5C91;
+  user-select: text;
+  -webkit-user-select: text;
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "Mitra NetraQu Palembang",
+  "description": "Aplikasi pemesanan jasa layanan pijat terapis tuna netra profesional dan bersertifikat di Palembang.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
