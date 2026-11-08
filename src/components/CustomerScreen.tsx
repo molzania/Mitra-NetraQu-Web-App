@@ -1058,7 +1058,7 @@ export function CustomerScreen({
                       : "bg-[#E6F2FA]/60 border-[#0D5C91]/25 text-[#0D5C91] hover:bg-[#E6F2FA]"
                   }`}
                 >
-                  <span>🔊 Suara Pria (Gentleman)</span>
+                  <span>🔊 Suara Pria</span>
                   {ttsGender === "pria" && <Check className="w-4 h-4 shrink-0" />}
                 </button>
                 <button

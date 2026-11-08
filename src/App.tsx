@@ -262,17 +262,12 @@ export default function App() {
     (newGender: "pria" | "wanita") => {
       setTtsGender(newGender);
       localStorage.setItem("mnq_tts_gender", newGender);
-      const label =
+      const msg =
         newGender === "pria"
-          ? "Suara Pria Gentleman"
-          : "Suara Wanita";
-      setToastMsg(`Mode pembaca layar diubah ke ${label}`);
-      speakText(
-        newGender === "pria"
-          ? "Halo, suara pemandu pria bernada gentleman dan berwibawa telah diaktifkan untuk memandu Anda."
-          : "Halo, suara pemandu wanita yang ramah telah diaktifkan untuk memandu Anda.",
-        newGender
-      );
+          ? "suara diubah menjadi suara pria"
+          : "suara diubah menjadi suara wanita";
+      setToastMsg(msg);
+      speakText(msg, newGender);
     },
     [speakText]
   );

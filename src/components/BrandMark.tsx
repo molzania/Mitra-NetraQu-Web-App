@@ -21,9 +21,8 @@ export function MitraNetraLogo({ className = "" }: { className?: string }) {
           <span className="text-[#0D5C91]">Mitra</span>{" "}
           <span className="text-[#4C9A2A]">NetraQu</span>
         </div>
-        <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wide text-slate-900 leading-tight mt-1">
-          <div>JASA PIJAT TERAPIS</div>
-          <div>DISABILITAS NETRA</div>
+        <div className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wide text-slate-900 leading-tight mt-1 whitespace-nowrap">
+          JASA PIJAT TERAPIS DISABILITAS NETRA
         </div>
       </div>
     </div>
@@ -57,6 +56,15 @@ export function MitraNetraFullLogo({ className = "w-full" }: { className?: strin
   );
 }
 
+function getFirstNameInitial(fullName: string): string {
+  const cleaned = (fullName || "")
+    .trim()
+    .replace(/^(bpk\.?|bapak|ibu|bu\.?|sdr\.?|sdri\.?|tn\.?|ny\.?)\s+/i, "")
+    .trim();
+  const firstChar = (cleaned || fullName || "P").trim().charAt(0).toUpperCase();
+  return firstChar || "P";
+}
+
 export function UserAvatar({
   photoUri,
   name,
@@ -70,26 +78,35 @@ export function UserAvatar({
 
   const dimensions =
     size === "lg"
-      ? "w-24 h-24 text-2xl"
+      ? "w-24 h-24 text-4xl"
       : size === "sm"
-      ? "w-12 h-12 text-xs"
-      : "w-16 h-16 text-base";
+      ? "w-11 h-11 text-base"
+      : "w-14 h-14 text-xl";
 
-  const isDefaultIcon = imgError || !photoUri;
-  const resolvedSrc = !isDefaultIcon ? photoUri : MITRA_ICON_IMAGE;
+  const hasCustomPhoto = Boolean(photoUri && photoUri.trim() && !imgError);
+  const initialLetter = getFirstNameInitial(name);
+
+  if (!hasCustomPhoto) {
+    return (
+      <div
+        aria-label={`Avatar ${name}`}
+        className={`${dimensions} rounded-full bg-[#0D5C91] text-white font-extrabold border-2 border-[#0D5C91] shadow-xs shrink-0 flex items-center justify-center select-none uppercase leading-none`}
+      >
+        {initialLetter}
+      </div>
+    );
+  }
 
   return (
     <div
-      className={`${dimensions} rounded-full overflow-hidden border-2 border-[#0D5C91] bg-white shrink-0 flex items-center justify-center p-1`}
+      className={`${dimensions} rounded-full overflow-hidden border-2 border-[#0D5C91] bg-[#0D5C91] shrink-0 flex items-center justify-center`}
     >
       <img
-        src={resolvedSrc}
+        src={photoUri}
         alt={name}
         referrerPolicy="no-referrer"
         onError={() => setImgError(true)}
-        className={`w-full h-full ${
-          isDefaultIcon ? "object-contain object-center scale-[1.08]" : "object-cover object-center rounded-full"
-        }`}
+        className="w-full h-full object-cover object-center rounded-full"
       />
     </div>
   );
