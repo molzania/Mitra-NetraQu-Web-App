@@ -17,15 +17,16 @@ Selain itu, aplikasi menerapkan standar **Etika Terapis Sesuai Jenis Kelamin**, 
 ## ✨ Fitur-Fitur Utama
 
 ### 1. Aksesibilitas Suara (*Text-to-Speech* Bahasa Indonesia)
-- Dilengkapi tombol **"Bacakan Layar"** di halaman masuk, halaman pelanggan, dan dashboard admin.
-- Fitur **"Bacakan Rincian Biaya"** untuk membacakan total tagihan pesanan secara otomatis menggunakan Web Speech API (`id-ID`).
-- Tombol **"Stop"** untuk menghentikan pembacaan suara kapan saja.
+- Dilengkapi pilihan **Suara Pria** (Bariton Gentleman) dan **Suara Wanita** dengan konfirmasi suara otomatis (*"suara diubah menjadi suara pria"* / *"suara diubah menjadi suara wanita"*).
+- Dilengkapi pengaturan **Kecepatan Suara** (**Lambat**, **Sedang**, dan **Cepat**).
+- Tombol **"Bacakan Layar"** dan **"Stop"** di halaman masuk, halaman pelanggan, dan dashboard admin.
 
-### 2. Autentikasi & Akses Multi-Peran
+### 2. Autentikasi, Keamanan Password & Akses Multi-Peran
 - **Login Nomor WhatsApp/HP + PIN**: Masuk atau daftar akun pelanggan baru dengan mudah.
-- **Login Cepat Akun Google**: Masuk instan satu ketukan menggunakan akun Google yang tersimpan.
-- **Akses Cepat Akun Demo**: Tersedia tombol *Satu Klik* di halaman utama untuk mencoba akun Pelanggan maupun Administrator tanpa perlu mengetik kredensial manual.
-- **Tombol Keluar Aplikasi (Logout)**: Tersedia di header dan tab profil dengan warna merah kontras tinggi untuk kemudahan navigasi.
+- **Inisial Huruf Nama Depan Otomatis**: Foto profil awal pelanggan menampilkan 2 huruf pertama dari nama depan (mengabaikan sapaan `Bpk.` / `Ibu`, misalnya `Bpk. Hendra Wijaya` menjadi **`HE`** dan `Ibu Siti Nurhaliza` menjadi **`SI`**) dengan latar belakang Biru (`#0D5C91`) dan teks Putih.
+- **Pengaturan Profil & Perubahan Password**: Pelanggan dapat memperbarui 7 data profil (`Nama Lengkap`, `Nama Panggilan`, `Alamat`, `Patokan`, `Email`, `No. Hp`, dan `Jenis Kelamin : Pria / Wanita`) serta mengubah **Password / PIN** akun.
+- **Proteksi Akun Demo & Administrator**: Khusus **Akun Demo** dan **Administrator**, kolom **Email** dan **Password/PIN** dikunci secara permanen dan tidak dapat diubah demi menjaga ketersediaan akses pengujian publik.
+- **Tombol Keluar Aplikasi (Logout)**: Tersedia di header dan tab profil dengan warna merah kontras tinggi (`#DC2626`) dan teks putih.
 
 ### 3. Formulir Pemesanan Layanan Pijat Interaktif
 - **Galeri Carousel Layanan**: Menampilkan foto-foto layanan terapi pijat profesional di halaman utama.
@@ -36,26 +37,29 @@ Selain itu, aplikasi menerapkan standar **Etika Terapis Sesuai Jenis Kelamin**, 
   | Pijat Punggung + Kaki | Rp 75.000 |
   | Pijat Punggung + Tangan | Rp 75.000 |
   | Pijat Tangan / Kaki / Kepala / Kerokan Only | Rp 50.000 |
-- **Pengaturan Peserta & Durasi Dinamis**: Mendukung pemesanan untuk **1 hingga 3 peserta** sekaligus, dengan pengaturan jenis layanan, jenis kelamin terapis, dan durasi (**1–3 jam**) untuk masing-masing peserta.
+- **Komposisi Peserta sesuai Etika Terapis**:
+  - **Peserta Laki-laki**: Maksimal **3 orang** (ditangani Terapis Pria).
+  - **Peserta Perempuan**: Maksimal **3 orang** (ditangani Terapis Wanita).
 - **Jadwal Operasional Terstruktur**: Pemilihan tanggal dan slot waktu mulai pukul **09.00 WIB hingga 19.00 WIB** (jam operasional Senin–Sabtu, 09.00–20.00 WIB).
-- **Kalkulasi Biaya Otomatis**: Menghitung subtotal per peserta, biaya transportasi (*Home Service* Rp 100.000 atau *Outlet* Rp 0), serta total keseluruhan secara *real-time*.
+- **Kolom Custom Message (Bagian 04)**: Pelanggan dapat menuliskan pesan atau catatan tambahan untuk terapis (keluhan pegal, tingkat tekanan pijatan, atau patokan rumah) yang otomatis disertakan ke pesan WhatsApp CS.
+- **Kalkulasi Biaya Otomatis**: Menghitung subtotal layanan, biaya transportasi (*Panggilan ke Rumah* Rp 100.000 atau *Datang ke Lokasi Pijat* Rp 0), serta total keseluruhan secara *real-time*.
 
 ### 4. Konfirmasi Pesanan & Integrasi WhatsApp CS
-- Setelah pesanan dibuat, aplikasi menampilkan ringkasan struk pesanan lengkap dengan kode unik (contoh: `MNQ-104218`).
+- Setelah pesanan dibuat, aplikasi menampilkan ringkasan struk pesanan lengkap dengan kode unik (contoh: `MNQ-20261102-1081`).
 - Pelanggan dapat langsung menekan tombol **"Kirim via WhatsApp CS"** untuk meneruskan detail pesanan ke nomor WhatsApp Customer Service resmi atau menyalin teks pesanan ke *clipboard*.
 
 ### 5. Pelacakan Riwayat & 7 Tahap Status Pesanan
 Pelanggan dapat memantau perkembangan pesanan mereka melalui indikator progres 7 tahap:
-1. `Diterima Sistem`
-2. `Menunggu Konfirmasi`
-3. `Terapis Ditugaskan`
-4. `Terapis Menuju Lokasi`
-5. `Layanan Berlangsung`
-6. `Menunggu Pembayaran`
-7. `Layanan Selesai`
+1. `Menunggu Dikonfirmasi (1/7)`
+2. `Dikonfirmasi (2/7)`
+3. `Menunggu Pembayaran (3/7)`
+4. `Pembayaran Lunas (4/7)`
+5. `Konfirmasi Terapis (5/7)`
+6. `Terapis On The Way (6/7)`
+7. `Pesanan Selesai (7/7)`
 
 ### 6. Dashboard Administrator Mitra NetraQu
-- **Ringkasan KPI**: Menampilkan total seluruh pesanan, jumlah pesanan aktif, pesanan selesai, dan estimasi total pendapatan.
+- **Ringkasan KPI**: Menampilkan total seluruh pesanan, jumlah pesanan hari ini, menunggu konfirmasi, dan estimasi total pendapatan.
 - **Filter & Pencarian Cepat**: Cari pesanan berdasarkan ID pesanan, nama pelanggan, nomor HP, atau filter berdasarkan tanggal pelaksanaan.
 - **Pembaruan Status Real-Time**: Ubah status pesanan pelanggan ke salah satu dari 7 tahapan layanan secara instan.
 - **Direktori Pelanggan & Pengaturan CS**: Lihat daftar pelanggan terdaftar dan perbarui nomor WhatsApp Customer Service aktif.
@@ -64,12 +68,12 @@ Pelanggan dapat memantau perkembangan pesanan mereka melalui indikator progres 7
 
 ## 🔐 Akun Demo untuk Pengujian
 
-Anda dapat langsung menguji aplikasi menggunakan tombol **Akses Cepat Akun Demo** di halaman login atau memasukkan data berikut secara manual:
+Anda dapat langsung menguji aplikasi menggunakan tombol **Akses Cepat Akun Demo** di halaman login atau memasukkan data berikut secara manual *(Catatan: Email & Password akun Demo dan Administrator dikunci agar tidak dapat diubah)*:
 
 | Peran | Nomor HP / WhatsApp | PIN / Password |
 | :--- | :--- | :--- |
-| **Pelanggan 1 (Bpk. Hendra Wijaya)** | `081271829911` | `123456` |
-| **Pelanggan 2 (Ibu Siti Rahmawati)** | `082199887766` | `123456` |
+| **Pelanggan Demo 1 (Bpk. Hendra Wijaya)** | `081271829911` | `123456` |
+| **Pelanggan Demo 2 (Ibu Siti Nurhaliza)** | `082199887766` | `123456` |
 | **Administrator Mitra NetraQu** | `081212345678` | `198006` |
 
 ---
@@ -84,14 +88,27 @@ Pastikan Anda telah menginstal:
 - `npm` (sudah termasuk bersama instalasi Node.js)
 - `git`
 
-### 2. Clone Repositori dari GitHub
-Buka terminal atau Command Prompt, lalu jalankan perintah berikut:
+### 2. Clone Repositori dari GitHub (Tanpa Menyertakan Database Spreadsheet Data Pribadi)
+Demi menjaga **privasi dan keamanan data pribadi pelanggan**, repositori ini hanya menyertakan kode sumber aplikasi (*source code*) dan sampel akun demo tiruan, serta **tidak menyertakan file database spreadsheet (`.xlsx`, `.xls`, `.csv`, `.ods`, `.gsheet`) yang berisi data pribadi pelanggan asli**.
 
-```bash
-git clone https://github.com/username-anda/mitra-netraqu-palembang.git
-cd mitra-netraqu-palembang
-```
-*(Ganti `username-anda/mitra-netraqu-palembang` dengan URL repositori GitHub Anda).*
+1. **Clone kode sumber aplikasi dari GitHub:**
+   ```bash
+   git clone https://github.com/username-anda/mitra-netraqu-palembang.git
+   cd mitra-netraqu-palembang
+   ```
+   *(Ganti `username-anda/mitra-netraqu-palembang` dengan URL repositori GitHub Anda).*
+
+2. **Jika repositori jarak jauh (remote) memiliki folder/file spreadsheet, lakukan clone dengan mengecualikan file spreadsheet data pribadi (`sparse-checkout`):**
+   ```bash
+   git clone --no-checkout https://github.com/username-anda/mitra-netraqu-palembang.git
+   cd mitra-netraqu-palembang
+   git sparse-checkout init --no-cone
+   git sparse-checkout set "/*" "!**/*.xlsx" "!**/*.xls" "!**/*.csv" "!**/*.ods" "!**/*.gsheet" "!/database/" "!/spreadsheets/"
+   git checkout
+   ```
+
+3. **Proteksi Otomatis `.gitignore`:**
+   File `.gitignore` pada proyek ini telah dikonfigurasi untuk menolak seluruh format spreadsheet (`*.xlsx`, `*.xls`, `*.csv`, `*.ods`, `*.gsheet`) serta folder `database/` dan `spreadsheets/`, sehingga file spreadsheet yang berisi data pribadi pelanggan tidak akan ikut ter-*commit* atau ter-*upload* ke GitHub.
 
 ### 3. Instal Dependensi
 Instal seluruh paket yang dibutuhkan aplikasi:
@@ -117,7 +134,7 @@ Jika Anda ingin membuat bundel aplikasi siap pakai (*production build*):
 
 ```bash
 npm run build
-npm run preview
+npm start
 ```
 
 ---
@@ -125,30 +142,29 @@ npm run preview
 ## 📖 Panduan Singkat Penggunaan Aplikasi
 
 ### Sebagai Pelanggan:
-1. **Masuk / Daftar Akun**: Pilih tab **No. HP + PIN** atau **Akun Google**, atau klik tombol demo **Pelanggan: Bpk. Hendra**.
+1. **Masuk / Daftar Akun**: Pilih tab **No. HP + PIN** atau **Akun Google**, atau klik tombol demo **Pelanggan: Bpk. Hendra** / **Ibu Siti**.
 2. **Buat Pesanan Baru**:
-   - Pada tab **Pesan Layanan**, pilih lokasi layanan (**Datang ke Outlet** atau **Panggil ke Rumah / Hotel**).
-   - Pilih **Tanggal** dan **Jam Mulai** terapi.
-   - Tentukan **Jumlah Peserta** (1–3 orang), lalu pilih jenis layanan pijat, jenis kelamin peserta, dan durasi jam untuk setiap peserta.
-   - Periksa rincian biaya, lalu klik **"Konfirmasi & Buat Pesanan"**.
-3. **Kirim Konfirmasi ke WhatsApp CS**: Klik **"Kirim via WhatsApp CS"** pada jendela konfirmasi yang muncul.
-4. **Pantau Status & Profil**:
-   - Buka tab **Riwayat & Status** untuk melihat tahapan pesanan Anda.
-   - Buka tab **Profil Saya** untuk memperbarui nama, foto profil, jenis kelamin, atau alamat domisili.
-5. **Keluar Aplikasi**: Klik tombol merah **"Keluar Aplikasi"** di pojok kanan atas layar atau di dalam halaman profil.
+   - Pada tab **Pesan Layanan**, pilih jenis layanan pijat dan durasi (**1 Jam** atau **2 Jam**).
+   - Tentukan **Komposisi Peserta** (**Peserta Laki-laki maks. 3 orang** dan **Peserta Perempuan maks. 3 orang**).
+   - Pilih **Tanggal**, **Jam Kedatangan**, serta **Lokasi Pijat** (**Datang ke Lokasi Pijat** atau **Panggilan ke Rumah**).
+   - Tambahkan **Pesan / Catatan Tambahan (Custom Message)** pada bagian **04. Ringkasan Biaya Pemesanan** bila diperlukan, lalu klik **"Pesan & Konfirmasi ke WhatsApp CS"**.
+3. **Kelola Profil & Password**:
+   - Buka tab **Profil Pelanggan** untuk memperbarui `Nama Lengkap`, `Nama Panggilan`, `Alamat`, `Patokan`, `Email`, `No. Hp`, dan `Jenis Kelamin`, serta mengubah **Password / PIN** (khusus akun pelanggan reguler/baru).
+4. **Keluar Aplikasi**: Klik tombol merah **"Keluar"** di pojok kanan atas layar atau di bagian bawah halaman profil.
 
 ### Sebagai Administrator:
 1. **Masuk ke Admin**: Masukkan Nomor HP `081212345678` dan Password `198006`, atau klik tombol **Admin Dashboard** pada bagian akses cepat.
-2. **Kelola Pesanan**: Gunakan kolom pencarian atau filter tanggal untuk menemukan pesanan pelanggan, lalu ubah status pesanan pada menu *dropdown* **Ubah Status Pesanan**.
-3. **Atur Nomor WhatsApp CS**: Perbarui nomor WhatsApp tujuan konfirmasi pada kartu pengaturan di bagian atas dashboard, lalu klik **Simpan**.
+2. **Kelola Pesanan**: Gunakan kolom pencarian atau filter tanggal untuk menemukan pesanan pelanggan, lalu ubah status pesanan pada menu *dropdown* **Ubah Status (1–7)**.
+3. **Atur Nomor WhatsApp CS**: Perbarui nomor WhatsApp tujuan konfirmasi pada tab **Pengaturan CS**, lalu klik **Simpan Nomor WhatsApp CS**.
 
 ---
 
 ## 🛠️ Teknologi yang Digunakan
 
-- **Frontend Framework**: React 19 + TypeScript
+- **Frontend & Backend**: React 19 + TypeScript + Express (`server.ts`)
 - **Build Tool**: Vite
 - **Styling**: Tailwind CSS v4 (Palet Biru `#0D5C91`, Hijau `#4C9A2A`, dan Putih `#FFFFFF`)
 - **Ikon**: Lucide React
-- **Aksesibilitas Suara**: Web Speech API (`window.speechSynthesis` Bahasa Indonesia)
-- **Penyimpanan Data**: Persistent `localStorage` Browser
+- **Aksesibilitas Suara**: Neural TTS Bahasa Indonesia (Suara Pria & Wanita + Kecepatan Lambat, Sedang, Cepat) & Web Speech API Fallback
+- **Penyimpanan Data Lokal**: Browser `localStorage` (Tanpa menyertakan database spreadsheet data pribadi di repositori GitHub)
+

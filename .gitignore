@@ -6,3 +6,20 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Keamanan Privasi: Jangan sertakan database spreadsheet atau file yang berisi data pribadi pelanggan ke GitHub
+*.xlsx
+*.xls
+*.csv
+*.ods
+*.tsv
+*.gsheet
+*.db
+*.sqlite
+*.sqlite3
+database/
+spreadsheets/
+data-pribadi/
+*credentials*.json
+*service-account*.json
+
