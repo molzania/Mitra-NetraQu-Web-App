@@ -110,6 +110,17 @@ Demi menjaga **privasi dan keamanan data pribadi pelanggan**, repositori ini han
 3. **Proteksi Otomatis `.gitignore`:**
    File `.gitignore` pada proyek ini telah dikonfigurasi untuk menolak seluruh format spreadsheet (`*.xlsx`, `*.xls`, `*.csv`, `*.ods`, `*.gsheet`) serta folder `database/` dan `spreadsheets/`, sehingga file spreadsheet yang berisi data pribadi pelanggan tidak akan ikut ter-*commit* atau ter-*upload* ke GitHub.
 
+4. **Menghapus Riwayat Commit Sebelumnya & Menyisakan 1 `initial commit` Bersih:**
+   Apabila Anda ingin menghapus seluruh riwayat *commit* lama di GitHub (misalnya agar riwayat file lama/data pribadi benar-benar bersih) dan menyisakan versi paling baru sebagai satu-satunya **`initial commit`**, jalankan perintah berikut di terminal proyek Anda:
+   ```bash
+   git checkout --orphan latest_branch
+   git add -A
+   git commit -m "initial commit"
+   git branch -D main
+   git branch -m main
+   git push -f origin main
+   ```
+
 ### 3. Instal Dependensi
 Instal seluruh paket yang dibutuhkan aplikasi:
 
