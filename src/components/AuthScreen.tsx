@@ -347,9 +347,9 @@ export function AuthScreen({
                   {SERVICES.map((srv) => (
                     <div
                       key={srv.id}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg bg-white border border-[#0D5C91]/20 text-xs"
+                      className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-white border border-[#0D5C91]/20 text-xs"
                     >
-                      <span className="font-semibold text-[#0D5C91] truncate pr-2">
+                      <span className="font-semibold text-[#0D5C91] leading-snug">
                         {srv.name}
                       </span>
                       <span className="font-bold text-[#4C9A2A] font-mono tabular-nums shrink-0">

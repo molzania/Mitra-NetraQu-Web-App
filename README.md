@@ -29,15 +29,13 @@ Selain itu, aplikasi menerapkan standar **Etika Terapis Sesuai Jenis Kelamin**, 
 
 ### 3. Formulir Pemesanan Layanan Pijat Interaktif
 - **Galeri Carousel Layanan**: Menampilkan foto-foto layanan terapi pijat profesional di halaman utama.
-- **6 Pilihan Layanan Pijat**:
+- **4 Pilihan Layanan Pijat & Tarif Resmi**:
   | Nama Layanan | Tarif per Jam |
   | :--- | :--- |
-  | Pijat Seluruh Tubuh (*Full Body*) | Rp 80.000 / jam |
-  | Pijat Refleksi Kaki | Rp 60.000 / jam |
-  | Pijat Tradisional & Kerokan | Rp 85.000 / jam |
-  | Pijat Kepala, Wajah & Telinga | Rp 50.000 / jam |
-  | Pijat Keseleo / Salah Urat | Rp 90.000 / jam |
-  | Pijat Ibu Hamil / Pasca Melahirkan | Rp 100.000 / jam |
+  | Pijat Seluruh Tubuh (Full Body) | Rp 100.000 |
+  | Pijat Punggung + Kaki | Rp 75.000 |
+  | Pijat Punggung + Tangan | Rp 75.000 |
+  | Pijat Tangan / Kaki / Kepala / Kerokan Only | Rp 50.000 |
 - **Pengaturan Peserta & Durasi Dinamis**: Mendukung pemesanan untuk **1 hingga 3 peserta** sekaligus, dengan pengaturan jenis layanan, jenis kelamin terapis, dan durasi (**1–3 jam**) untuk masing-masing peserta.
 - **Jadwal Operasional Terstruktur**: Pemilihan tanggal dan slot waktu mulai pukul **09.00 WIB hingga 19.00 WIB** (jam operasional Senin–Sabtu, 09.00–20.00 WIB).
 - **Kalkulasi Biaya Otomatis**: Menghitung subtotal per peserta, biaya transportasi (*Home Service* Rp 100.000 atau *Outlet* Rp 0), serta total keseluruhan secara *real-time*.

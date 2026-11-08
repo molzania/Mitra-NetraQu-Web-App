@@ -18,43 +18,29 @@ export const SERVICES: ServiceItem[] = [
     id: "srv_body",
     name: "Pijat Seluruh Tubuh (Full Body)",
     rate: 100000,
-    desc: "Relaksasi menyeluruh oleh terapis tuna netra profesional.",
+    desc: "Relaksasi menyeluruh seluruh tubuh oleh terapis tuna netra profesional.",
     focusArea: "Seluruh Tubuh"
-  },
-  {
-    id: "srv_back_hand",
-    name: "Pijat Punggung + Tangan",
-    rate: 75000,
-    desc: "Fokus meredakan pegal area punggung, bahu, dan lengan.",
-    focusArea: "Punggung & Lengan"
   },
   {
     id: "srv_back_foot",
     name: "Pijat Punggung + Kaki",
     rate: 75000,
-    desc: "Kombinasi pijat punggung dan refleksi kaki.",
+    desc: "Kombinasi terapi pijat punggung dan refleksi titik saraf kaki.",
     focusArea: "Punggung & Kaki"
   },
   {
-    id: "srv_head",
-    name: "Pijat Kepala",
-    rate: 50000,
-    desc: "Meredakan pusing, stres, dan ketegangan otot kepala.",
-    focusArea: "Kepala & Leher"
+    id: "srv_back_hand",
+    name: "Pijat Punggung + Tangan",
+    rate: 75000,
+    desc: "Fokus meredakan pegal area punggung, bahu, dan lengan/tangan.",
+    focusArea: "Punggung & Tangan"
   },
   {
-    id: "srv_hand",
-    name: "Pijat Tangan",
+    id: "srv_single_area",
+    name: "Pijat Tangan / Kaki / Kepala / Kerokan Only",
     rate: 50000,
-    desc: "Melancarkan peredaran darah area tangan dan jari.",
-    focusArea: "Tangan & Jari"
-  },
-  {
-    id: "srv_foot",
-    name: "Pijat Kaki",
-    rate: 50000,
-    desc: "Refleksi titik saraf kaki untuk kebugaran tubuh.",
-    focusArea: "Telapak & Betis"
+    desc: "Pilihan terapi fokus satu area (Tangan, Kaki, Kepala, atau Kerokan saja).",
+    focusArea: "Tangan / Kaki / Kepala / Kerokan"
   }
 ];
 
