@@ -94,14 +94,24 @@ export function AdminScreen({
       <header className="sticky top-0 z-30 bg-[#0D5C91] text-white border-b border-[#4C9A2A]/40">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-15 flex items-center justify-between gap-8">
           {/* Zone 1: Brand Title with Icon Image */}
-          <div className="inline-flex items-center gap-2.5 font-extrabold text-base sm:text-lg tracking-tight whitespace-nowrap shrink-0">
-            <img
-              src={MITRA_ICON_IMAGE}
-              alt="Icon Mitra NetraQu"
-              referrerPolicy="no-referrer"
-              className="w-11 h-11 rounded-xl object-contain object-center bg-white p-1 shrink-0"
-            />
-            <span>Mitra NetraQu Admin</span>
+          <div className="inline-flex items-center gap-2.5 whitespace-nowrap shrink-0">
+            <div className="w-14 h-11 rounded-xl overflow-hidden bg-white shrink-0 flex items-center justify-center">
+              <img
+                src={MITRA_ICON_IMAGE}
+                alt="Logo Mitra NetraQu"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover object-center scale-[1.12]"
+              />
+            </div>
+            <div className="leading-tight">
+              <div className="font-extrabold text-base sm:text-lg tracking-tight leading-none text-white">
+                Mitra <span className="text-[#EAF6E5]">NetraQu</span>{" "}
+                <span className="text-xs font-bold text-white/80">Admin</span>
+              </div>
+              <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wide text-[#EAF6E5] mt-0.5">
+                JASA PIJAT TERAPIS DISABILITAS NETRA
+              </div>
+            </div>
           </div>
 
           {/* Zone 2: Navigation Links */}

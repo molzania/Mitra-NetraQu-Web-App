@@ -218,17 +218,25 @@ export function CustomerScreen({
           <button
             type="button"
             onClick={() => setCustomerTab(0)}
-            className="inline-flex items-center gap-2.5 text-base sm:text-lg font-extrabold tracking-tight text-[#0D5C91] whitespace-nowrap shrink-0 cursor-pointer"
+            className="inline-flex items-center gap-2.5 text-left whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <img
-              src={MITRA_ICON_IMAGE}
-              alt="Icon Mitra NetraQu"
-              referrerPolicy="no-referrer"
-              className="w-11 h-11 rounded-xl object-contain object-center bg-white border border-[#0D5C91]/25 p-1 shrink-0"
-            />
-            <span>
-              Mitra <span className="text-[#4C9A2A]">NetraQu</span>
-            </span>
+            <div className="w-14 h-11 rounded-xl overflow-hidden bg-white border border-[#0D5C91]/25 shrink-0 flex items-center justify-center">
+              <img
+                src={MITRA_ICON_IMAGE}
+                alt="Logo Mitra NetraQu"
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover object-center scale-[1.12]"
+              />
+            </div>
+            <div className="leading-tight">
+              <div className="text-base sm:text-lg font-extrabold tracking-tight leading-none">
+                <span className="text-[#0D5C91]">Mitra</span>{" "}
+                <span className="text-[#4C9A2A]">NetraQu</span>
+              </div>
+              <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wide text-slate-900 mt-0.5">
+                JASA PIJAT TERAPIS DISABILITAS NETRA
+              </div>
+            </div>
           </button>
 
           {/* Zone 2: Navigation Links (Desktop) */}

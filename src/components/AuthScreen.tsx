@@ -258,8 +258,8 @@ export function AuthScreen({
           {/* Left Column: Brand Value Proposition & Service Catalog Preview */}
           <div className="lg:col-span-7 flex flex-col justify-between bg-white border border-[#0D5C91]/20 rounded-2xl p-6 sm:p-8 shadow-sm">
             <div className="space-y-5">
-              <div className="text-xs font-bold text-[#4C9A2A] tracking-wide">
-                Layanan Terapis Tuna Netra Bersertifikat · Palembang
+              <div className="text-xs font-extrabold text-[#4C9A2A] tracking-wider uppercase">
+                JASA PIJAT TERAPIS DISABILITAS NETRA · PALEMBANG
               </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#0D5C91] tracking-tight leading-tight">
                 Solusi Kebugaran & Relaksasi Bersama Terapis Profesional

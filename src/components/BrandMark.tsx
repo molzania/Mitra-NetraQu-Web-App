@@ -7,21 +7,23 @@ export const MITRA_FULL_LOGO_IMAGE =
 
 export function MitraNetraLogo({ className = "" }: { className?: string }) {
   return (
-    <div className={`inline-flex items-center gap-3.5 select-none ${className}`}>
-      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border-2 border-[#0D5C91]/25 shadow-xs shrink-0 flex items-center justify-center p-1">
+    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
+      <div className="w-20 h-14 sm:w-24 sm:h-16 rounded-2xl overflow-hidden bg-white border-2 border-[#0D5C91]/20 shadow-xs shrink-0 flex items-center justify-center px-1">
         <img
           src={MITRA_ICON_IMAGE}
-          alt="Icon Mitra NetraQu Palembang"
+          alt="Logo Mitra NetraQu"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-contain object-center scale-[1.08] transform-gpu"
+          className="w-full h-full object-cover object-center scale-[1.12] transform-gpu"
         />
       </div>
       <div className="text-left leading-tight">
-        <div className="font-extrabold tracking-tight text-lg sm:text-xl text-[#0D5C91]">
-          Mitra <span className="text-[#4C9A2A]">NetraQu</span>
+        <div className="font-extrabold tracking-tight text-lg sm:text-2xl leading-none">
+          <span className="text-[#0D5C91]">Mitra</span>{" "}
+          <span className="text-[#4C9A2A]">NetraQu</span>
         </div>
-        <div className="text-xs font-semibold text-[#4C9A2A]">
-          Terapis Pijat Tuna Netra Palembang
+        <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wide text-slate-900 leading-tight mt-1">
+          <div>JASA PIJAT TERAPIS</div>
+          <div>DISABILITAS NETRA</div>
         </div>
       </div>
     </div>
@@ -33,20 +35,22 @@ export function MitraNetraFullLogo({ className = "w-full" }: { className?: strin
     <div
       className={`flex flex-col items-center justify-center mx-auto select-none text-center ${className}`}
     >
-      <div className="w-40 h-28 sm:w-48 sm:h-32 overflow-hidden flex items-center justify-center mx-auto">
+      <div className="w-60 h-24 sm:w-72 sm:h-28 overflow-hidden flex items-center justify-center mx-auto">
         <img
           src={MITRA_FULL_LOGO_IMAGE}
-          alt="Logo Mitra NetraQu - Jasa Pijat Terapis Tuna Netra"
+          alt="Logo Mitra NetraQu - Jasa Pijat Terapis Disabilitas Netra"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-contain object-center scale-[1.2] transform-gpu mx-auto"
+          className="w-full h-full object-cover object-center scale-[1.15] transform-gpu mx-auto"
         />
       </div>
-      <div className="mt-1 leading-tight">
-        <div className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0D5C91]">
-          MITRA <span className="text-[#4C9A2A]">NETRAQU</span>
+      <div className="mt-1 leading-none">
+        <div className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <span className="text-[#0D5C91]">Mitra</span>{" "}
+          <span className="text-[#4C9A2A]">NetraQu</span>
         </div>
-        <div className="text-xs sm:text-sm font-bold text-slate-800 mt-0.5">
-          Jasa Pijat Terapis Tuna Netra
+        <div className="text-sm sm:text-base font-extrabold text-slate-950 uppercase tracking-wide leading-tight mt-2">
+          <div>JASA PIJAT TERAPIS</div>
+          <div>DISABILITAS NETRA</div>
         </div>
       </div>
     </div>
