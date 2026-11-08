@@ -7,18 +7,20 @@ export const MITRA_FULL_LOGO_IMAGE =
 
 export function MitraNetraLogo({ className = "" }: { className?: string }) {
   return (
-    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
-      <img
-        src={MITRA_ICON_IMAGE}
-        alt="Icon Mitra NetraQu Palembang"
-        referrerPolicy="no-referrer"
-        className="w-11 h-11 rounded-xl object-contain bg-white border border-[#0D5C91]/20 p-0.5 shadow-2xs shrink-0"
-      />
+    <div className={`inline-flex items-center gap-3.5 select-none ${className}`}>
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border-2 border-[#0D5C91]/25 shadow-xs shrink-0 flex items-center justify-center">
+        <img
+          src={MITRA_ICON_IMAGE}
+          alt="Icon Mitra NetraQu Palembang"
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover object-[50%_42%] scale-[1.45]"
+        />
+      </div>
       <div className="text-left leading-tight">
-        <div className="font-extrabold tracking-tight text-base sm:text-lg text-[#0D5C91]">
+        <div className="font-extrabold tracking-tight text-lg sm:text-xl text-[#0D5C91]">
           Mitra <span className="text-[#4C9A2A]">NetraQu</span>
         </div>
-        <div className="text-[11px] font-semibold text-[#4C9A2A]">
+        <div className="text-xs font-semibold text-[#4C9A2A]">
           Terapis Pijat Tuna Netra Palembang
         </div>
       </div>
@@ -26,14 +28,16 @@ export function MitraNetraLogo({ className = "" }: { className?: string }) {
   );
 }
 
-export function MitraNetraFullLogo({ className = "h-28" }: { className?: string }) {
+export function MitraNetraFullLogo({ className = "w-[88%] sm:w-[85%]" }: { className?: string }) {
   return (
-    <img
-      src={MITRA_FULL_LOGO_IMAGE}
-      alt="Logo Mitra NetraQu - Jasa Pijat Terapis Tuna Netra"
-      referrerPolicy="no-referrer"
-      className={`object-contain select-none ${className}`}
-    />
+    <div className={`overflow-hidden flex items-center justify-center select-none ${className}`}>
+      <img
+        src={MITRA_FULL_LOGO_IMAGE}
+        alt="Logo Mitra NetraQu - Jasa Pijat Terapis Tuna Netra"
+        referrerPolicy="no-referrer"
+        className="w-full h-auto object-contain scale-[1.28] transform-gpu"
+      />
+    </div>
   );
 }
 
@@ -52,19 +56,26 @@ export function UserAvatar({
     size === "lg"
       ? "w-24 h-24 text-2xl"
       : size === "sm"
-      ? "w-10 h-10 text-xs"
-      : "w-14 h-14 text-base";
+      ? "w-12 h-12 text-xs"
+      : "w-16 h-16 text-base";
 
-  const resolvedSrc = !imgError ? photoUri || MITRA_ICON_IMAGE : MITRA_ICON_IMAGE;
+  const isDefaultIcon = imgError || !photoUri;
+  const resolvedSrc = !isDefaultIcon ? photoUri : MITRA_ICON_IMAGE;
 
   return (
-    <img
-      src={resolvedSrc}
-      alt={name}
-      referrerPolicy="no-referrer"
-      onError={() => setImgError(true)}
-      className={`${dimensions} rounded-full object-cover border-2 border-[#0D5C91] bg-white p-0.5 shrink-0`}
-    />
+    <div
+      className={`${dimensions} rounded-full overflow-hidden border-2 border-[#0D5C91] bg-white shrink-0 flex items-center justify-center`}
+    >
+      <img
+        src={resolvedSrc}
+        alt={name}
+        referrerPolicy="no-referrer"
+        onError={() => setImgError(true)}
+        className={`w-full h-full object-cover ${
+          isDefaultIcon ? "object-[50%_42%] scale-[1.45]" : "object-center"
+        }`}
+      />
+    </div>
   );
 }
 

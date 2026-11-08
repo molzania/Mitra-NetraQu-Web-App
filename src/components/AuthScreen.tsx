@@ -396,8 +396,8 @@ export function AuthScreen({
           <div className="lg:col-span-5 flex flex-col justify-center">
             <div className="bg-white border border-[#0D5C91]/25 rounded-2xl shadow-sm p-6 sm:p-7 w-full">
               {/* Official Mitra NetraQu Logo Banner */}
-              <div className="bg-white border border-[#0D5C91]/20 rounded-2xl px-4 py-3 mb-5 flex justify-center shadow-2xs">
-                <MitraNetraFullLogo className="h-28 sm:h-32" />
+              <div className="bg-white border border-[#0D5C91]/20 rounded-2xl px-3 py-4 mb-5 flex justify-center items-center shadow-2xs">
+                <MitraNetraFullLogo className="w-[88%] sm:w-[90%]" />
               </div>
 
               {/* Segmented Auth Tabs */}
