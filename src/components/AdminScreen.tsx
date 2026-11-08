@@ -26,10 +26,13 @@ interface AdminScreenProps {
   orders: OrderRecord[];
   users: UserProfile[];
   csWhatsApp: string;
+  ttsGender: "pria" | "wanita";
+  onChangeTtsGender: (gender: "pria" | "wanita") => void;
   onUpdateOrderStatus: (orderId: string, newStatus: OrderStatusCode) => void;
   onUpdateCsWhatsApp: (newWa: string) => void;
   onCopyText: (text: string, label?: string) => void;
   onSpeak: (text: string) => void;
+  onStopSpeak: () => void;
   onLogout: () => void;
 }
 
@@ -37,10 +40,13 @@ export function AdminScreen({
   orders,
   users,
   csWhatsApp,
+  ttsGender,
+  onChangeTtsGender,
   onUpdateOrderStatus,
   onUpdateCsWhatsApp,
   onCopyText,
   onSpeak,
+  onStopSpeak,
   onLogout
 }: AdminScreenProps) {
   const [adminTab, setAdminTab] = useState<0 | 1 | 2>(0);
@@ -159,22 +165,61 @@ export function AdminScreen({
               Akun Administrator Aktif: <span className="font-mono font-bold text-[#0D5C91]">{ADMIN_PHONE}</span> · Kelola 7 tahapan status pesanan & data pelanggan
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() =>
-              onSpeak(
-                `Dashboard Administrator Mitra NetraQu. Saat ini terdapat ${
-                  filteredOrders.length
-                } pesanan dengan total nilai transaksi ${formatRupiah(
-                  totalRevenue
-                )}, dan ${users.length} pengguna terdaftar.`
-              )
-            }
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#E6F2FA] text-[#0D5C91] text-xs font-bold hover:bg-[#0D5C91] hover:text-white transition cursor-pointer"
-          >
-            <Volume2 className="w-4 h-4" />
-            <span>Bacakan Ringkasan Admin</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Pilihan Gender Suara TTS (Pria / Wanita) */}
+            <div
+              className="inline-flex items-center bg-[#E6F2FA] border border-[#0D5C91]/20 rounded-xl p-0.5 text-xs font-bold"
+              role="group"
+              aria-label="Pilih Gender Suara Pembaca Layar"
+            >
+              <button
+                type="button"
+                onClick={() => onChangeTtsGender("pria")}
+                className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                  ttsGender === "pria"
+                    ? "bg-[#0D5C91] text-white shadow-2xs"
+                    : "text-[#0D5C91] hover:bg-[#0D5C91]/10"
+                }`}
+              >
+                Suara Pria
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeTtsGender("wanita")}
+                className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer whitespace-nowrap ${
+                  ttsGender === "wanita"
+                    ? "bg-[#4C9A2A] text-white shadow-2xs"
+                    : "text-[#0D5C91] hover:bg-[#4C9A2A]/10"
+                }`}
+              >
+                Suara Wanita
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                onSpeak(
+                  `Dashboard Administrator Mitra NetraQu. Saat ini terdapat ${
+                    filteredOrders.length
+                  } pesanan dengan total nilai transaksi ${formatRupiah(
+                    totalRevenue
+                  )}, dan ${users.length} pengguna terdaftar.`
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0D5C91] text-white text-xs font-bold hover:bg-[#4C9A2A] transition cursor-pointer"
+            >
+              <Volume2 className="w-4 h-4" />
+              <span>Bacakan Ringkasan Admin</span>
+            </button>
+            <button
+              type="button"
+              onClick={onStopSpeak}
+              className="px-3 py-2 rounded-xl bg-[#E6F2FA] text-[#0D5C91] text-xs font-bold hover:bg-[#0D5C91]/20 transition cursor-pointer"
+            >
+              Stop
+            </button>
+          </div>
         </div>
 
         {/* 4-Column KPI Summary Row */}

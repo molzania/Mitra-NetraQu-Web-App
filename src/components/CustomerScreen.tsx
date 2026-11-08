@@ -33,6 +33,8 @@ interface CustomerScreenProps {
   orders: OrderRecord[];
   csWhatsApp: string;
   ttsEnabled: boolean;
+  ttsGender: "pria" | "wanita";
+  onChangeTtsGender: (gender: "pria" | "wanita") => void;
   onToggleTts: () => void;
   onSpeak: (text: string) => void;
   onStopSpeak: () => void;
@@ -47,6 +49,8 @@ export function CustomerScreen({
   orders,
   csWhatsApp,
   ttsEnabled,
+  ttsGender,
+  onChangeTtsGender,
   onToggleTts,
   onSpeak,
   onStopSpeak,
@@ -288,6 +292,36 @@ export function CustomerScreen({
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Pilihan Gender Suara TTS (Pria / Wanita) */}
+            <div
+              className="inline-flex items-center bg-white/15 rounded-md p-0.5 text-xs font-bold"
+              role="group"
+              aria-label="Pilih Gender Suara Pembaca Layar"
+            >
+              <button
+                type="button"
+                onClick={() => onChangeTtsGender("pria")}
+                className={`px-2.5 py-1 rounded transition cursor-pointer whitespace-nowrap ${
+                  ttsGender === "pria"
+                    ? "bg-white text-[#0D5C91] shadow-2xs"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                Suara Pria
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeTtsGender("wanita")}
+                className={`px-2.5 py-1 rounded transition cursor-pointer whitespace-nowrap ${
+                  ttsGender === "wanita"
+                    ? "bg-[#4C9A2A] text-white shadow-2xs"
+                    : "text-white hover:bg-white/10"
+                }`}
+              >
+                Suara Wanita
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() => onSpeak(summaryText)}
@@ -988,6 +1022,48 @@ export function CustomerScreen({
                   className="text-[#4C9A2A] font-bold hover:underline cursor-pointer"
                 >
                   Salin
+                </button>
+              </div>
+            </div>
+
+            {/* Pengaturan Gender Suara Text-to-Speech (Pria / Wanita) */}
+            <div className="bg-white border border-[#0D5C91]/25 rounded-2xl p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="font-bold text-sm text-[#0D5C91]">
+                    Pengaturan Suara Pembaca Layar (Text-to-Speech)
+                  </div>
+                  <p className="text-xs text-[#0D5C91]/80 mt-0.5">
+                    Pilih jenis suara pemandu Bahasa Indonesia sesuai preferensi Anda:
+                  </p>
+                </div>
+                <Volume2 className="w-5 h-5 text-[#4C9A2A] shrink-0" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => onChangeTtsGender("pria")}
+                  className={`py-3 px-4 rounded-xl border-2 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    ttsGender === "pria"
+                      ? "bg-[#0D5C91] border-[#0D5C91] text-white shadow-xs"
+                      : "bg-[#E6F2FA]/60 border-[#0D5C91]/25 text-[#0D5C91] hover:bg-[#E6F2FA]"
+                  }`}
+                >
+                  <span>🔊 Suara Pria</span>
+                  {ttsGender === "pria" && <Check className="w-4 h-4 shrink-0" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChangeTtsGender("wanita")}
+                  className={`py-3 px-4 rounded-xl border-2 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    ttsGender === "wanita"
+                      ? "bg-[#4C9A2A] border-[#4C9A2A] text-white shadow-xs"
+                      : "bg-[#EAF6E5]/60 border-[#4C9A2A]/30 text-[#4C9A2A] hover:bg-[#EAF6E5]"
+                  }`}
+                >
+                  <span>🔊 Suara Wanita</span>
+                  {ttsGender === "wanita" && <Check className="w-4 h-4 shrink-0" />}
                 </button>
               </div>
             </div>

@@ -46,6 +46,8 @@ const CAROUSEL_SLIDES = [
 
 interface AuthScreenProps {
   users: UserProfile[];
+  ttsGender: "pria" | "wanita";
+  onChangeTtsGender: (gender: "pria" | "wanita") => void;
   onLoginSuccess: (user: UserProfile, welcomeMessage: string) => void;
   onRegisterUser: (newUser: UserProfile) => void;
   onShowToast: (msg: string) => void;
@@ -55,6 +57,8 @@ interface AuthScreenProps {
 
 export function AuthScreen({
   users,
+  ttsGender,
+  onChangeTtsGender,
   onLoginSuccess,
   onRegisterUser,
   onShowToast,
@@ -192,7 +196,37 @@ export function AuthScreen({
       <header className="relative z-10 w-full border-b border-[#0D5C91]/15 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <MitraNetraLogo />
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+            {/* Pilihan Gender Suara TTS (Pria / Wanita) */}
+            <div
+              className="inline-flex items-center bg-[#E6F2FA] border border-[#0D5C91]/20 rounded-lg p-0.5 text-xs font-bold"
+              role="group"
+              aria-label="Pilih Gender Suara Pembaca Layar"
+            >
+              <button
+                type="button"
+                onClick={() => onChangeTtsGender("pria")}
+                className={`px-2.5 py-1.5 rounded-md transition cursor-pointer whitespace-nowrap ${
+                  ttsGender === "pria"
+                    ? "bg-[#0D5C91] text-white shadow-2xs"
+                    : "text-[#0D5C91] hover:bg-[#0D5C91]/10"
+                }`}
+              >
+                Suara Pria
+              </button>
+              <button
+                type="button"
+                onClick={() => onChangeTtsGender("wanita")}
+                className={`px-2.5 py-1.5 rounded-md transition cursor-pointer whitespace-nowrap ${
+                  ttsGender === "wanita"
+                    ? "bg-[#4C9A2A] text-white shadow-2xs"
+                    : "text-[#0D5C91] hover:bg-[#4C9A2A]/10"
+                }`}
+              >
+                Suara Wanita
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() =>
