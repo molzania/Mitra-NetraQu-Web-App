@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 
 export const MITRA_ICON_IMAGE =
-  "/assets/aistudio/Gemini_Generated_Image__1__e30be246.jpeg";
+  "/assets/aistudio/5603103c-7e15-47cb-81f6-0008b38143eb_17c0740a.webp";
 export const MITRA_FULL_LOGO_IMAGE =
-  "/assets/aistudio/Gemini_Generated_Image_d6aea58c.jpeg";
+  "/assets/aistudio/5603103c-7e15-47cb-81f6-0008b38143eb_17c0740a.webp";
 
 export function MitraNetraLogo({ className = "" }: { className?: string }) {
   return (
     <div className={`inline-flex items-center gap-3.5 select-none ${className}`}>
-      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border-2 border-[#0D5C91]/25 shadow-xs shrink-0 flex items-center justify-center relative">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border-2 border-[#0D5C91]/25 shadow-xs shrink-0 flex items-center justify-center p-1">
         <img
           src={MITRA_ICON_IMAGE}
           alt="Icon Mitra NetraQu Palembang"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-center origin-center translate-y-[14%] scale-[1.55] transform-gpu"
+          className="w-full h-full object-contain object-center scale-[1.08] transform-gpu"
         />
       </div>
       <div className="text-left leading-tight">
@@ -31,14 +31,24 @@ export function MitraNetraLogo({ className = "" }: { className?: string }) {
 export function MitraNetraFullLogo({ className = "w-full" }: { className?: string }) {
   return (
     <div
-      className={`overflow-hidden flex items-center justify-center mx-auto select-none ${className}`}
+      className={`flex flex-col items-center justify-center mx-auto select-none text-center ${className}`}
     >
-      <img
-        src={MITRA_FULL_LOGO_IMAGE}
-        alt="Logo Mitra NetraQu - Jasa Pijat Terapis Tuna Netra"
-        referrerPolicy="no-referrer"
-        className="w-full h-auto object-contain object-center origin-center scale-[1.32] transform-gpu mx-auto"
-      />
+      <div className="w-40 h-28 sm:w-48 sm:h-32 overflow-hidden flex items-center justify-center mx-auto">
+        <img
+          src={MITRA_FULL_LOGO_IMAGE}
+          alt="Logo Mitra NetraQu - Jasa Pijat Terapis Tuna Netra"
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-contain object-center scale-[1.2] transform-gpu mx-auto"
+        />
+      </div>
+      <div className="mt-1 leading-tight">
+        <div className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0D5C91]">
+          MITRA <span className="text-[#4C9A2A]">NETRAQU</span>
+        </div>
+        <div className="text-xs sm:text-sm font-bold text-slate-800 mt-0.5">
+          Jasa Pijat Terapis Tuna Netra
+        </div>
+      </div>
     </div>
   );
 }
@@ -66,15 +76,15 @@ export function UserAvatar({
 
   return (
     <div
-      className={`${dimensions} rounded-full overflow-hidden border-2 border-[#0D5C91] bg-white shrink-0 flex items-center justify-center relative`}
+      className={`${dimensions} rounded-full overflow-hidden border-2 border-[#0D5C91] bg-white shrink-0 flex items-center justify-center p-1`}
     >
       <img
         src={resolvedSrc}
         alt={name}
         referrerPolicy="no-referrer"
         onError={() => setImgError(true)}
-        className={`w-full h-full object-cover object-center origin-center transform-gpu ${
-          isDefaultIcon ? "translate-y-[14%] scale-[1.55]" : ""
+        className={`w-full h-full ${
+          isDefaultIcon ? "object-contain object-center scale-[1.08]" : "object-cover object-center rounded-full"
         }`}
       />
     </div>

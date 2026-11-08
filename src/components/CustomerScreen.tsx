@@ -224,7 +224,7 @@ export function CustomerScreen({
               src={MITRA_ICON_IMAGE}
               alt="Icon Mitra NetraQu"
               referrerPolicy="no-referrer"
-              className="w-9 h-9 rounded-lg object-contain bg-white border border-[#0D5C91]/25 p-0.5 shrink-0"
+              className="w-11 h-11 rounded-xl object-contain object-center bg-white border border-[#0D5C91]/25 p-1 shrink-0"
             />
             <span>
               Mitra <span className="text-[#4C9A2A]">NetraQu</span>
@@ -1050,7 +1050,7 @@ export function CustomerScreen({
                       : "bg-[#E6F2FA]/60 border-[#0D5C91]/25 text-[#0D5C91] hover:bg-[#E6F2FA]"
                   }`}
                 >
-                  <span>🔊 Suara Pria</span>
+                  <span>🔊 Suara Pria (Gentleman)</span>
                   {ttsGender === "pria" && <Check className="w-4 h-4 shrink-0" />}
                 </button>
                 <button

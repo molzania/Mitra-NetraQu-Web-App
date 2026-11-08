@@ -62,10 +62,14 @@ export default function App() {
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(false);
   const [ttsGender, setTtsGender] = useState<"pria" | "wanita">(() => {
     const saved = localStorage.getItem("mnq_tts_gender");
-    return saved === "pria" || saved === "wanita" ? saved : "wanita";
+    return saved === "pria" || saved === "wanita" ? saved : "pria";
   });
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const activeAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const ttsAbortRef = React.useRef<AbortController | null>(null);
+  const audioCacheRef = React.useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -92,13 +96,26 @@ export default function App() {
     localStorage.setItem("mnq_users", JSON.stringify(users));
   }, [users]);
 
-  const speakText = useCallback(
-    (text: string, genderOverride?: "pria" | "wanita") => {
+  const stopSpeak = useCallback(() => {
+    if (ttsAbortRef.current) {
+      ttsAbortRef.current.abort();
+      ttsAbortRef.current = null;
+    }
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current.currentTime = 0;
+      activeAudioRef.current = null;
+    }
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  const speakBrowserFallback = useCallback(
+    (text: string, activeGender: "pria" | "wanita") => {
       if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-        setToastMsg("Browser ini tidak mendukung fitur suara Text-To-Speech.");
         return;
       }
-      const activeGender = genderOverride || ttsGender;
       window.speechSynthesis.cancel();
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "id-ID";
@@ -115,18 +132,39 @@ export default function App() {
           v.name.toLowerCase().includes("indonesia")
       );
 
-      const maleKeywords = ["ardi", "male", "pria", "laki", "budi", "andika", "david", "daniel", "alex"];
-      const femaleKeywords = ["gadis", "damayanti", "female", "wanita", "perempuan", "siti", "zira", "samantha"];
+      const maleKeywords = [
+        "ardi",
+        "male",
+        "pria",
+        "laki",
+        "budi",
+        "andika",
+        "rizky",
+        "david",
+        "daniel",
+        "guy",
+        "alex"
+      ];
+      const femaleKeywords = [
+        "gadis",
+        "damayanti",
+        "female",
+        "wanita",
+        "perempuan",
+        "siti",
+        "zira",
+        "samantha"
+      ];
 
       let chosenVoice: SpeechSynthesisVoice | undefined;
-      let hasDedicatedGenderVoice = false;
+      let hasDedicatedMaleVoice = false;
 
       if (activeGender === "pria") {
         chosenVoice = idVoices.find((v) =>
           maleKeywords.some((kw) => v.name.toLowerCase().includes(kw))
         );
         if (chosenVoice) {
-          hasDedicatedGenderVoice = true;
+          hasDedicatedMaleVoice = true;
         } else if (idVoices.length > 1) {
           const nonFemale = idVoices.find(
             (v) => !femaleKeywords.some((kw) => v.name.toLowerCase().includes(kw))
@@ -136,19 +174,10 @@ export default function App() {
           chosenVoice = idVoices[0];
         }
       } else {
-        chosenVoice = idVoices.find((v) =>
-          femaleKeywords.some((kw) => v.name.toLowerCase().includes(kw))
-        );
-        if (chosenVoice) {
-          hasDedicatedGenderVoice = true;
-        } else if (idVoices.length > 1) {
-          const nonMale = idVoices.find(
-            (v) => !maleKeywords.some((kw) => v.name.toLowerCase().includes(kw))
-          );
-          chosenVoice = nonMale || idVoices[0];
-        } else {
-          chosenVoice = idVoices[0];
-        }
+        chosenVoice =
+          idVoices.find((v) =>
+            femaleKeywords.some((kw) => v.name.toLowerCase().includes(kw))
+          ) || idVoices[0];
       }
 
       if (chosenVoice) {
@@ -156,31 +185,94 @@ export default function App() {
       }
 
       if (activeGender === "pria") {
-        utter.pitch = hasDedicatedGenderVoice ? 0.9 : 0.62;
-        utter.rate = 0.95;
+        // Gentleman baritone cadence: calm, deep, composed, and authoritative
+        utter.pitch = hasDedicatedMaleVoice ? 0.82 : 0.72;
+        utter.rate = 0.91;
       } else {
-        utter.pitch = hasDedicatedGenderVoice ? 1.08 : 1.32;
+        utter.pitch = 1.1;
         utter.rate = 1.0;
       }
 
       window.speechSynthesis.speak(utter);
     },
-    [ttsGender, availableVoices]
+    [availableVoices]
   );
 
-  const stopSpeak = useCallback(() => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-  }, []);
+  const speakText = useCallback(
+    async (text: string, genderOverride?: "pria" | "wanita") => {
+      const activeGender = genderOverride || ttsGender;
+      stopSpeak();
+
+      const cacheKey = `${activeGender}::${text.trim()}`;
+      const cachedDataUrl = audioCacheRef.current.get(cacheKey);
+      if (cachedDataUrl) {
+        try {
+          const audio = new Audio(cachedDataUrl);
+          activeAudioRef.current = audio;
+          await audio.play();
+          return;
+        } catch {
+          // fall through if audio playback failed
+        }
+      }
+
+      const controller = new AbortController();
+      ttsAbortRef.current = controller;
+
+      try {
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text.trim(), gender: activeGender }),
+          signal: controller.signal
+        });
+
+        if (!res.ok) {
+          throw new Error("TTS API error");
+        }
+
+        const data = (await res.json()) as {
+          audioBase64?: string;
+          mimeType?: string;
+        };
+
+        if (controller.signal.aborted) return;
+
+        if (data.audioBase64) {
+          const mime = data.mimeType || "audio/wav";
+          const dataUrl = `data:${mime};base64,${data.audioBase64}`;
+          audioCacheRef.current.set(cacheKey, dataUrl);
+          const audio = new Audio(dataUrl);
+          activeAudioRef.current = audio;
+          await audio.play();
+          return;
+        }
+        throw new Error("Empty audio");
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+        speakBrowserFallback(text, activeGender);
+      }
+    },
+    [ttsGender, stopSpeak, speakBrowserFallback]
+  );
 
   const handleChangeTtsGender = useCallback(
     (newGender: "pria" | "wanita") => {
       setTtsGender(newGender);
       localStorage.setItem("mnq_tts_gender", newGender);
-      const label = newGender === "pria" ? "Suara Pria" : "Suara Wanita";
+      const label =
+        newGender === "pria"
+          ? "Suara Pria Gentleman"
+          : "Suara Wanita";
       setToastMsg(`Mode pembaca layar diubah ke ${label}`);
-      speakText(`Suara pembaca layar diatur ke ${label}`, newGender);
+      speakText(
+        newGender === "pria"
+          ? "Halo, suara pemandu pria bernada gentleman dan berwibawa telah diaktifkan untuk memandu Anda."
+          : "Halo, suara pemandu wanita yang ramah telah diaktifkan untuk memandu Anda.",
+        newGender
+      );
     },
     [speakText]
   );

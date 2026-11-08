@@ -99,7 +99,7 @@ export function AdminScreen({
               src={MITRA_ICON_IMAGE}
               alt="Icon Mitra NetraQu"
               referrerPolicy="no-referrer"
-              className="w-9 h-9 rounded-lg object-contain bg-white p-0.5 shrink-0"
+              className="w-11 h-11 rounded-xl object-contain object-center bg-white p-1 shrink-0"
             />
             <span>Mitra NetraQu Admin</span>
           </div>
