@@ -10,7 +10,8 @@ import {
   UserProfile,
   buildWhatsAppMessage,
   formatRupiah,
-  getStatusObj
+  getStatusObj,
+  isDemoOrAdminUser
 } from "../data/constants";
 import { MITRA_ICON_IMAGE, UserAvatar } from "./BrandMark";
 import {
@@ -25,7 +26,9 @@ import {
   LogOut,
   Camera,
   Check,
-  X
+  X,
+  Lock,
+  KeyRound
 } from "lucide-react";
 
 interface CustomerScreenProps {
@@ -34,14 +37,27 @@ interface CustomerScreenProps {
   csWhatsApp: string;
   ttsEnabled: boolean;
   ttsGender: "pria" | "wanita";
+  ttsSpeed: "lambat" | "sedang" | "cepat";
   onChangeTtsGender: (gender: "pria" | "wanita") => void;
+  onChangeTtsSpeed: (speed: "lambat" | "sedang" | "cepat") => void;
   onToggleTts: () => void;
   onSpeak: (text: string) => void;
   onStopSpeak: () => void;
   onCopyText: (text: string, label?: string) => void;
   onCreateOrder: (newOrder: OrderRecord) => void;
-  onUpdateUser: (updated: UserProfile, toastMsg?: string) => void;
+  onUpdateUser: (
+    updated: UserProfile,
+    toastMsg?: string,
+    previousPhone?: string
+  ) => void;
   onLogout: () => void;
+}
+
+function normalizeGenderLabel(
+  g?: string
+): "Pria" | "Wanita" {
+  if (g === "Wanita" || g === "Perempuan") return "Wanita";
+  return "Pria";
 }
 
 export function CustomerScreen({
@@ -50,7 +66,9 @@ export function CustomerScreen({
   csWhatsApp,
   ttsEnabled,
   ttsGender,
+  ttsSpeed,
   onChangeTtsGender,
+  onChangeTtsSpeed,
   onToggleTts,
   onSpeak,
   onStopSpeak,
@@ -62,19 +80,45 @@ export function CustomerScreen({
   const [customerTab, setCustomerTab] = useState<0 | 1 | 2>(0);
   const [activeWhatsAppOrder, setActiveWhatsAppOrder] = useState<OrderRecord | null>(null);
 
+  const isFemaleInitial = normalizeGenderLabel(currentUser.gender) === "Wanita";
+
   const [booking, setBooking] = useState<BookingDraft>(() => ({
     services: { srv_body: 1 },
-    maleCount: currentUser.gender === "Perempuan" ? 0 : 1,
-    femaleCount: currentUser.gender === "Perempuan" ? 1 : 0,
+    maleCount: isFemaleInitial ? 0 : 1,
+    femaleCount: isFemaleInitial ? 1 : 0,
     bookingDate: new Date().toISOString().split("T")[0],
     timeSlot: "09.00 WIB",
     locationType: "Datang ke Lokasi Pijat",
-    customAddress: currentUser.address || ""
+    customAddress: currentUser.address || "",
+    customMessage: ""
   }));
 
-  // Profile editable fields
-  const [editAddress, setEditAddress] = useState(currentUser.address || "");
+  // Profile editable fields (7 fields requested)
   const [editName, setEditName] = useState(currentUser.fullName || "");
+  const [editNickname, setEditNickname] = useState(
+    currentUser.nickname ||
+      currentUser.fullName
+        .replace(/^(bpk\.?|bapak|ibu|bu\.?|sdr\.?|sdri\.?)\s+/i, "")
+        .split(/\s+/)[0] ||
+      ""
+  );
+  const [editAddress, setEditAddress] = useState(currentUser.address || "");
+  const [editLandmark, setEditLandmark] = useState(currentUser.landmark || "");
+  const [editEmail, setEditEmail] = useState(currentUser.email || "");
+  const [editPhone, setEditPhone] = useState(currentUser.phone || "");
+  const [editGender, setEditGender] = useState<"Pria" | "Wanita">(
+    normalizeGenderLabel(currentUser.gender)
+  );
+
+  // Password / PIN change state
+  const isLockedCredentials = isDemoOrAdminUser(currentUser);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordStatus, setPasswordStatus] = useState<{
+    type: "error" | "success";
+    text: string;
+  } | null>(null);
 
   // Calculate booking costs
   const totalParticipants = booking.maleCount + booking.femaleCount;
@@ -123,12 +167,12 @@ export function CustomerScreen({
       const f = prev.femaleCount;
       if (type === "male") {
         const nextM = m + delta;
-        if (nextM >= 0 && nextM + f <= MAX_PARTICIPANTS && nextM + f >= 1) {
+        if (nextM >= 0 && nextM <= MAX_PARTICIPANTS && nextM + f >= 1) {
           return { ...prev, maleCount: nextM };
         }
       } else {
         const nextF = f + delta;
-        if (nextF >= 0 && m + nextF <= MAX_PARTICIPANTS && m + nextF >= 1) {
+        if (nextF >= 0 && nextF <= MAX_PARTICIPANTS && m + nextF >= 1) {
           return { ...prev, femaleCount: nextF };
         }
       }
@@ -160,6 +204,7 @@ export function CustomerScreen({
       totalParticipants,
       locationType: booking.locationType,
       serviceAddress: address,
+      customMessage: booking.customMessage.trim(),
       totalPayment,
       status: "PENDING_CONFIRMATION"
     };
@@ -184,14 +229,77 @@ export function CustomerScreen({
 
   const handleSaveProfileDetails = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanedPhone = editPhone.trim() || currentUser.phone;
     onUpdateUser(
       {
         ...currentUser,
         fullName: editName.trim() || currentUser.fullName,
-        address: editAddress.trim() || currentUser.address
+        nickname: editNickname.trim(),
+        address: editAddress.trim(),
+        landmark: editLandmark.trim(),
+        email: isLockedCredentials ? currentUser.email || "" : editEmail.trim(),
+        phone: cleanedPhone,
+        gender: editGender,
+        isDemo: isLockedCredentials && !currentUser.isAdmin ? true : currentUser.isDemo
       },
-      "Data profil pelanggan berhasil disimpan"
+      "Data profil pelanggan berhasil disimpan",
+      currentUser.phone
     );
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordStatus(null);
+
+    if (isLockedCredentials) {
+      setPasswordStatus({
+        type: "error",
+        text: "Akun Demo dan Administrator tidak dapat mengubah Password/PIN."
+      });
+      return;
+    }
+
+    const currentPin = currentUser.pin || "";
+    if (currentPin && oldPassword.trim() !== currentPin) {
+      setPasswordStatus({
+        type: "error",
+        text: "Password / PIN lama yang Anda masukkan tidak sesuai."
+      });
+      return;
+    }
+
+    if (newPassword.trim().length < 4) {
+      setPasswordStatus({
+        type: "error",
+        text: "Password / PIN baru minimal harus terdiri dari 4 karakter/digit."
+      });
+      return;
+    }
+
+    if (newPassword.trim() !== confirmPassword.trim()) {
+      setPasswordStatus({
+        type: "error",
+        text: "Konfirmasi Password / PIN baru tidak cocok."
+      });
+      return;
+    }
+
+    onUpdateUser(
+      {
+        ...currentUser,
+        pin: newPassword.trim()
+      },
+      "Password / PIN akun berhasil diperbarui!",
+      currentUser.phone
+    );
+
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordStatus({
+      type: "success",
+      text: "Password / PIN Anda berhasil diperbarui!"
+    });
   };
 
   const myOrders = orders.filter((o) => o.customerPhone === currentUser.phone);
@@ -328,6 +436,28 @@ export function CustomerScreen({
               >
                 Suara Wanita
               </button>
+            </div>
+
+            {/* Pilihan Kecepatan Suara TTS (Lambat / Sedang / Cepat) */}
+            <div
+              className="inline-flex items-center bg-white/15 rounded-md p-0.5 text-xs font-bold"
+              role="group"
+              aria-label="Pilih Kecepatan Suara Pembaca Layar"
+            >
+              {(["lambat", "sedang", "cepat"] as const).map((spd) => (
+                <button
+                  key={spd}
+                  type="button"
+                  onClick={() => onChangeTtsSpeed(spd)}
+                  className={`px-2 py-1 rounded capitalize transition cursor-pointer whitespace-nowrap ${
+                    ttsSpeed === spd
+                      ? "bg-[#4C9A2A] text-white shadow-2xs"
+                      : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  {spd}
+                </button>
+              ))}
             </div>
 
             <button
@@ -474,16 +604,16 @@ export function CustomerScreen({
 
                 {/* 2. Komposisi Peserta */}
                 <section className="bg-white border border-[#0D5C91]/25 rounded-2xl p-5 shadow-xs space-y-3.5">
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-wrap justify-between items-center gap-2">
                     <h2 className="font-bold text-sm sm:text-base text-[#0D5C91]">
                       02. Komposisi Peserta
                     </h2>
                     <span className="text-xs font-bold text-[#4C9A2A]">
-                      Maksimal {MAX_PARTICIPANTS} Orang · Total: {totalParticipants} Orang
+                      Total Peserta: {totalParticipants} Orang
                     </span>
                   </div>
                   <p className="text-xs text-[#0D5C91]/80 leading-relaxed">
-                    Sesuai standar etika layanan Mitra NetraQu: Peserta laki-laki ditangani oleh Terapis Pria, dan peserta perempuan ditangani oleh Terapis Wanita.
+                    Sesuai standar etika layanan Mitra NetraQu: Peserta laki-laki maksimal {MAX_PARTICIPANTS} orang (ditangani Terapis Pria), dan peserta perempuan maksimal {MAX_PARTICIPANTS} orang (ditangani Terapis Wanita).
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -493,7 +623,7 @@ export function CustomerScreen({
                           Peserta Laki-laki
                         </div>
                         <div className="text-xs text-[#4C9A2A] font-semibold">
-                          Ditangani Terapis Pria
+                          Maksimal {MAX_PARTICIPANTS} orang (Terapis Pria)
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -511,8 +641,9 @@ export function CustomerScreen({
                         <button
                           type="button"
                           onClick={() => updateParticipant("male", 1)}
+                          disabled={booking.maleCount >= MAX_PARTICIPANTS}
                           aria-label="Tambah peserta laki-laki"
-                          className="w-10 h-10 rounded-lg bg-[#0D5C91] hover:bg-[#4C9A2A] text-white font-bold text-lg transition cursor-pointer"
+                          className="w-10 h-10 rounded-lg bg-[#0D5C91] hover:bg-[#4C9A2A] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-lg transition cursor-pointer"
                         >
                           +
                         </button>
@@ -525,7 +656,7 @@ export function CustomerScreen({
                           Peserta Perempuan
                         </div>
                         <div className="text-xs text-[#4C9A2A] font-semibold">
-                          Ditangani Terapis Wanita
+                          Maksimal {MAX_PARTICIPANTS} orang (Terapis Wanita)
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -543,8 +674,9 @@ export function CustomerScreen({
                         <button
                           type="button"
                           onClick={() => updateParticipant("female", 1)}
+                          disabled={booking.femaleCount >= MAX_PARTICIPANTS}
                           aria-label="Tambah peserta perempuan"
-                          className="w-10 h-10 rounded-lg bg-[#4C9A2A] hover:bg-[#0D5C91] text-white font-bold text-lg transition cursor-pointer"
+                          className="w-10 h-10 rounded-lg bg-[#4C9A2A] hover:bg-[#0D5C91] disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-lg transition cursor-pointer"
                         >
                           +
                         </button>
@@ -727,6 +859,29 @@ export function CustomerScreen({
                     </span>
                   </div>
 
+                  {/* Kolom Custom Message pada Bagian No. 4 */}
+                  <div className="pt-2 border-t border-[#0D5C91]/15">
+                    <label
+                      htmlFor="customMessage"
+                      className="block text-xs font-bold text-[#0D5C91] mb-1.5"
+                    >
+                      Pesan / Catatan Tambahan (Custom Message) :
+                    </label>
+                    <textarea
+                      id="customMessage"
+                      rows={2}
+                      value={booking.customMessage}
+                      onChange={(e) =>
+                        setBooking((prev) => ({
+                          ...prev,
+                          customMessage: e.target.value
+                        }))
+                      }
+                      placeholder="Tuliskan keluhan pegal, tekanan pijatan yang diinginkan, patokan lokasi, atau pesan khusus untuk terapis..."
+                      className="w-full bg-white border border-[#0D5C91]/30 rounded-xl p-2.5 text-xs sm:text-sm text-[#0D5C91] focus:outline-none focus:border-[#4C9A2A]"
+                    />
+                  </div>
+
                   <div className="pt-2 flex flex-col sm:flex-row gap-2">
                     <button
                       type="button"
@@ -738,7 +893,11 @@ export function CustomerScreen({
                             booking.bookingDate
                           } pukul ${booking.timeSlot}. Lokasi: ${
                             booking.locationType
-                          }. Total pembayaran ${formatRupiah(totalPayment)}.`
+                          }.${
+                            booking.customMessage.trim()
+                              ? ` Pesan tambahan: ${booking.customMessage.trim()}.`
+                              : ""
+                          } Total pembayaran ${formatRupiah(totalPayment)}.`
                         )
                       }
                       className="px-3.5 py-3 rounded-xl border border-[#0D5C91]/30 bg-white text-[#0D5C91] font-bold text-xs hover:bg-[#EAF6E5] transition cursor-pointer whitespace-nowrap"
@@ -855,6 +1014,14 @@ export function CustomerScreen({
                               {o.locationType} ({o.serviceAddress})
                             </span>
                           </div>
+                          {o.customMessage && (
+                            <div className="flex items-start gap-2 pt-1 text-[#0D5C91] bg-[#E6F2FA]/50 p-2 rounded-lg border border-[#0D5C91]/15">
+                              <MessageCircle className="w-3.5 h-3.5 text-[#4C9A2A] shrink-0 mt-0.5" />
+                              <span>
+                                <strong>Pesan Tambahan:</strong> {o.customMessage}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -934,147 +1101,284 @@ export function CustomerScreen({
 
               <h2 className="mt-2 font-extrabold text-lg text-[#0D5C91]">
                 {currentUser.fullName}
+                {currentUser.nickname ? ` (${currentUser.nickname})` : ""}
               </h2>
               <p className="text-xs text-[#4C9A2A] font-bold font-mono">
-                {currentUser.phone}
+                {currentUser.phone} · {normalizeGenderLabel(currentUser.gender)}
               </p>
-
-              {/* Ubah Jenis Kelamin */}
-              <div className="mt-4 flex items-center gap-2">
-                <span className="text-xs font-bold text-[#0D5C91]">
-                  Jenis Kelamin:
-                </span>
-                <select
-                  value={currentUser.gender || "Laki-laki"}
-                  onChange={(e) =>
-                    onUpdateUser(
-                      {
-                        ...currentUser,
-                        gender: e.target.value as "Laki-laki" | "Perempuan"
-                      },
-                      "Jenis kelamin diubah menjadi " + e.target.value
-                    )
-                  }
-                  className="text-xs font-bold border border-[#0D5C91]/40 rounded-lg px-3 py-1.5 bg-[#E6F2FA] text-[#0D5C91] cursor-pointer"
-                >
-                  <option value="Laki-laki">Laki-laki (Terapis Pria)</option>
-                  <option value="Perempuan">Perempuan (Terapis Wanita)</option>
-                </select>
-              </div>
+              {currentUser.email && (
+                <p className="text-xs text-[#0D5C91]/80 mt-0.5">{currentUser.email}</p>
+              )}
             </div>
 
-            {/* Form Update Nama & Alamat */}
+            {/* Form Update Data Profil Pelanggan Lengkap */}
             <form
               onSubmit={handleSaveProfileDetails}
-              className="bg-white border border-[#0D5C91]/25 rounded-2xl p-5 shadow-xs space-y-3.5"
+              className="bg-white border border-[#0D5C91]/25 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
             >
-              <div className="font-bold text-sm text-[#0D5C91]">
-                Perbarui Data Domisili Pelanggan
+              <div className="border-b border-[#0D5C91]/15 pb-2.5">
+                <h3 className="font-extrabold text-sm sm:text-base text-[#0D5C91]">
+                  Perbarui Data Profil Pelanggan
+                </h3>
+                <p className="text-xs text-[#4C9A2A] font-medium mt-0.5">
+                  Lengkapi data diri dan patokan lokasi untuk memudahkan terapis menuju lokasi Anda
+                </p>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Nama Lengkap :
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Contoh: Bpk. Hendra Wijaya"
+                    className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91] focus:outline-none focus:border-[#4C9A2A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Nama Panggilan :
+                  </label>
+                  <input
+                    type="text"
+                    value={editNickname}
+                    onChange={(e) => setEditNickname(e.target.value)}
+                    placeholder="Contoh: Hendra"
+                    className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91] focus:outline-none focus:border-[#4C9A2A]"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-[#0D5C91] mb-1">
-                  Nama Lengkap
-                </label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-[#0D5C91] mb-1">
-                  Alamat Rumah di Palembang
+                  Alamat :
                 </label>
                 <textarea
                   rows={2}
                   value={editAddress}
                   onChange={(e) => setEditAddress(e.target.value)}
-                  className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91]"
+                  placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan di Palembang"
+                  className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91] focus:outline-none focus:border-[#4C9A2A]"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                  Patokan :
+                </label>
+                <input
+                  type="text"
+                  value={editLandmark}
+                  onChange={(e) => setEditLandmark(e.target.value)}
+                  placeholder="Contoh: Pagar hitam samping Masjid / Seberang Indomaret"
+                  className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91] focus:outline-none focus:border-[#4C9A2A]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center justify-between text-xs font-bold text-[#0D5C91] mb-1">
+                    <span>Email :</span>
+                    {isLockedCredentials && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0D5C91] bg-[#E6F2FA] px-2 py-0.5 rounded-md">
+                        <Lock className="w-3 h-3" />
+                        <span>Terkunci (Akun Demo)</span>
+                      </span>
+                    )}
+                  </label>
+                  <input
+                    type="email"
+                    value={isLockedCredentials ? currentUser.email || "" : editEmail}
+                    onChange={(e) => {
+                      if (!isLockedCredentials) setEditEmail(e.target.value);
+                    }}
+                    disabled={isLockedCredentials}
+                    placeholder="Contoh: nama@gmail.com"
+                    className={`w-full border rounded-xl px-3.5 py-2 text-sm focus:outline-none ${
+                      isLockedCredentials
+                        ? "bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed"
+                        : "bg-white border-[#0D5C91]/30 text-[#0D5C91] focus:border-[#4C9A2A]"
+                    }`}
+                  />
+                  {isLockedCredentials && (
+                    <p className="text-[11px] text-[#0D5C91]/75 mt-1">
+                      Email pada akun demo & administrator dikunci dan tidak dapat diubah.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    No. Hp :
+                  </label>
+                  <input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="Contoh: 081271829911"
+                    className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91] font-mono focus:outline-none focus:border-[#4C9A2A]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-[#0D5C91] mb-1.5">
+                  Jenis Kelamin :
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditGender("Pria")}
+                    className={`py-2.5 px-4 rounded-xl border-2 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                      editGender === "Pria"
+                        ? "bg-[#0D5C91] border-[#0D5C91] text-white shadow-2xs"
+                        : "bg-white border-[#0D5C91]/25 text-[#0D5C91] hover:bg-[#E6F2FA]"
+                    }`}
+                  >
+                    <span>Pria</span>
+                    {editGender === "Pria" && <Check className="w-4 h-4 shrink-0" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditGender("Wanita")}
+                    className={`py-2.5 px-4 rounded-xl border-2 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                      editGender === "Wanita"
+                        ? "bg-[#4C9A2A] border-[#4C9A2A] text-white shadow-2xs"
+                        : "bg-white border-[#4C9A2A]/30 text-[#0D5C91] hover:bg-[#EAF6E5]"
+                    }`}
+                  >
+                    <span>Wanita</span>
+                    {editGender === "Wanita" && <Check className="w-4 h-4 shrink-0" />}
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
-                className="px-4 py-2.5 bg-[#4C9A2A] hover:bg-[#0D5C91] text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#4C9A2A] hover:bg-[#0D5C91] text-white rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer"
               >
                 Simpan Perubahan Profil
               </button>
             </form>
 
-            {/* Info Kontak dengan Tombol Copy */}
-            <div className="bg-white border border-[#0D5C91]/25 rounded-2xl p-5 shadow-xs space-y-3 text-xs">
-              <div className="font-bold text-sm text-[#0D5C91]">
-                Informasi Pelanggan (Bisa Copy-Paste)
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-[#0D5C91]/15">
-                <div className="text-[#0D5C91]">
-                  <span className="font-medium">Nomor HP:</span>{" "}
-                  <strong className="font-mono">{currentUser.phone}</strong>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onCopyText(currentUser.phone, "Nomor HP")}
-                  className="text-[#4C9A2A] font-bold hover:underline cursor-pointer"
-                >
-                  Salin
-                </button>
-              </div>
-              <div className="flex justify-between items-center py-1">
-                <div className="text-[#0D5C91]">
-                  <span className="font-medium">Alamat:</span>{" "}
-                  <strong>{currentUser.address || "-"}</strong>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onCopyText(currentUser.address || "", "Alamat")}
-                  className="text-[#4C9A2A] font-bold hover:underline cursor-pointer"
-                >
-                  Salin
-                </button>
-              </div>
-            </div>
-
-            {/* Pengaturan Gender Suara Text-to-Speech (Pria / Wanita) */}
-            <div className="bg-white border border-[#0D5C91]/25 rounded-2xl p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between gap-2">
+            {/* Form Pengaturan Perubahan Password / PIN */}
+            <form
+              onSubmit={handleChangePassword}
+              className="bg-white border border-[#0D5C91]/25 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#0D5C91]/15 pb-2.5">
                 <div>
-                  <div className="font-bold text-sm text-[#0D5C91]">
-                    Pengaturan Suara Pembaca Layar (Text-to-Speech)
-                  </div>
-                  <p className="text-xs text-[#0D5C91]/80 mt-0.5">
-                    Pilih jenis suara pemandu Bahasa Indonesia sesuai preferensi Anda:
+                  <h3 className="font-extrabold text-sm sm:text-base text-[#0D5C91] flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-[#4C9A2A]" />
+                    <span>Pengaturan Perubahan Password / PIN</span>
+                  </h3>
+                  <p className="text-xs text-[#4C9A2A] font-medium mt-0.5">
+                    Perbarui Password atau PIN keamanan untuk masuk ke akun Anda
                   </p>
                 </div>
-                <Volume2 className="w-5 h-5 text-[#4C9A2A] shrink-0" />
+                {isLockedCredentials && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#E6F2FA] border border-[#0D5C91]/25 text-[#0D5C91] text-xs font-bold">
+                    <Lock className="w-3.5 h-3.5 text-[#0D5C91]" />
+                    <span>Akun Demo / Admin Terkunci</span>
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => onChangeTtsGender("pria")}
-                  className={`py-3 px-4 rounded-xl border-2 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                    ttsGender === "pria"
-                      ? "bg-[#0D5C91] border-[#0D5C91] text-white shadow-xs"
-                      : "bg-[#E6F2FA]/60 border-[#0D5C91]/25 text-[#0D5C91] hover:bg-[#E6F2FA]"
+              {isLockedCredentials && (
+                <div className="p-3.5 rounded-xl bg-[#E6F2FA]/80 border border-[#0D5C91]/25 text-xs text-[#0D5C91] flex items-start gap-2.5">
+                  <Lock className="w-4 h-4 text-[#0D5C91] shrink-0 mt-0.5" />
+                  <div className="leading-relaxed">
+                    <strong>Perhatian:</strong> Hanya akun pelanggan baru/reguler yang dapat mengubah Email dan Password/PIN. Untuk menjaga ketersediaan akses publik, <strong>Akun Demo</strong> dan <strong>Administrator</strong> tidak dapat diubah Email maupun Password-nya.
+                  </div>
+                </div>
+              )}
+
+              {passwordStatus && (
+                <div
+                  className={`p-3 rounded-xl text-xs font-bold border ${
+                    passwordStatus.type === "success"
+                      ? "bg-[#EAF6E5] border-[#4C9A2A]/40 text-[#4C9A2A]"
+                      : "bg-red-50 border-red-200 text-red-700"
                   }`}
                 >
-                  <span>🔊 Suara Pria</span>
-                  {ttsGender === "pria" && <Check className="w-4 h-4 shrink-0" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onChangeTtsGender("wanita")}
-                  className={`py-3 px-4 rounded-xl border-2 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                    ttsGender === "wanita"
-                      ? "bg-[#4C9A2A] border-[#4C9A2A] text-white shadow-xs"
-                      : "bg-[#EAF6E5]/60 border-[#4C9A2A]/30 text-[#4C9A2A] hover:bg-[#EAF6E5]"
-                  }`}
-                >
-                  <span>🔊 Suara Wanita</span>
-                  {ttsGender === "wanita" && <Check className="w-4 h-4 shrink-0" />}
-                </button>
+                  {passwordStatus.text}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Password / PIN Lama :
+                  </label>
+                  <input
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    disabled={isLockedCredentials}
+                    placeholder={isLockedCredentials ? "••••••" : "Masukkan PIN lama"}
+                    className={`w-full border rounded-xl px-3.5 py-2 text-sm focus:outline-none ${
+                      isLockedCredentials
+                        ? "bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed"
+                        : "bg-white border-[#0D5C91]/30 text-[#0D5C91] focus:border-[#4C9A2A]"
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Password / PIN Baru :
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isLockedCredentials}
+                    placeholder={isLockedCredentials ? "••••••" : "Minimal 4 digit/karakter"}
+                    className={`w-full border rounded-xl px-3.5 py-2 text-sm focus:outline-none ${
+                      isLockedCredentials
+                        ? "bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed"
+                        : "bg-white border-[#0D5C91]/30 text-[#0D5C91] focus:border-[#4C9A2A]"
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Konfirmasi Password Baru :
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={isLockedCredentials}
+                    placeholder={isLockedCredentials ? "••••••" : "Ulangi PIN baru"}
+                    className={`w-full border rounded-xl px-3.5 py-2 text-sm focus:outline-none ${
+                      isLockedCredentials
+                        ? "bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed"
+                        : "bg-white border-[#0D5C91]/30 text-[#0D5C91] focus:border-[#4C9A2A]"
+                    }`}
+                  />
+                </div>
               </div>
-            </div>
+
+              <button
+                type="submit"
+                disabled={isLockedCredentials}
+                className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  isLockedCredentials
+                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                    : "bg-[#0D5C91] hover:bg-[#4C9A2A] text-white cursor-pointer"
+                }`}
+              >
+                {isLockedCredentials
+                  ? "Perubahan Password Dikunci (Akun Demo)"
+                  : "Simpan Password / PIN Baru"}
+              </button>
+            </form>
 
             <button
               type="button"

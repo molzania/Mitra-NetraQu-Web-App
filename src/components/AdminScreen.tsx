@@ -19,7 +19,8 @@ import {
   ClipboardCheck,
   Wallet,
   Settings,
-  MessageCircle
+  MessageCircle,
+  Lock
 } from "lucide-react";
 
 interface AdminScreenProps {
@@ -27,7 +28,9 @@ interface AdminScreenProps {
   users: UserProfile[];
   csWhatsApp: string;
   ttsGender: "pria" | "wanita";
+  ttsSpeed: "lambat" | "sedang" | "cepat";
   onChangeTtsGender: (gender: "pria" | "wanita") => void;
+  onChangeTtsSpeed: (speed: "lambat" | "sedang" | "cepat") => void;
   onUpdateOrderStatus: (orderId: string, newStatus: OrderStatusCode) => void;
   onUpdateCsWhatsApp: (newWa: string) => void;
   onCopyText: (text: string, label?: string) => void;
@@ -41,7 +44,9 @@ export function AdminScreen({
   users,
   csWhatsApp,
   ttsGender,
+  ttsSpeed,
   onChangeTtsGender,
+  onChangeTtsSpeed,
   onUpdateOrderStatus,
   onUpdateCsWhatsApp,
   onCopyText,
@@ -204,6 +209,28 @@ export function AdminScreen({
               >
                 Suara Wanita
               </button>
+            </div>
+
+            {/* Pilihan Kecepatan Suara TTS (Lambat / Sedang / Cepat) */}
+            <div
+              className="inline-flex items-center bg-[#EAF6E5] border border-[#4C9A2A]/25 rounded-xl p-0.5 text-xs font-bold"
+              role="group"
+              aria-label="Pilih Kecepatan Suara Pembaca Layar"
+            >
+              {(["lambat", "sedang", "cepat"] as const).map((spd) => (
+                <button
+                  key={spd}
+                  type="button"
+                  onClick={() => onChangeTtsSpeed(spd)}
+                  className={`px-2.5 py-1.5 rounded-lg capitalize transition cursor-pointer whitespace-nowrap ${
+                    ttsSpeed === spd
+                      ? "bg-[#4C9A2A] text-white shadow-2xs"
+                      : "text-[#0D5C91] hover:bg-[#4C9A2A]/15"
+                  }`}
+                >
+                  {spd}
+                </button>
+              ))}
             </div>
 
             <button
@@ -416,6 +443,11 @@ export function AdminScreen({
                             <strong>Lokasi:</strong> {o.locationType} —{" "}
                             {o.serviceAddress}
                           </div>
+                          {o.customMessage && (
+                            <div className="bg-[#E6F2FA]/60 border border-[#0D5C91]/15 rounded-lg p-2 mt-1">
+                              <strong>Pesan Tambahan:</strong> {o.customMessage}
+                            </div>
+                          )}
                         </div>
 
                         <div className="pt-1 flex items-center justify-between">
@@ -490,25 +522,45 @@ export function AdminScreen({
               {users.map((u) => (
                 <div
                   key={u.phone}
-                  className="bg-white border border-[#0D5C91]/25 rounded-2xl p-4 shadow-xs flex justify-between items-center gap-4"
+                  className="bg-white border border-[#0D5C91]/25 rounded-2xl p-4 shadow-xs flex justify-between items-start gap-4"
                 >
-                  <div className="flex items-center gap-3.5">
+                  <div className="flex items-start gap-3.5">
                     <UserAvatar photoUri={u.photoUri} name={u.fullName} size="sm" />
-                    <div className="text-xs space-y-0.5">
+                    <div className="text-xs space-y-1">
                       <div className="font-bold text-sm text-[#0D5C91]">
-                        {u.fullName}
+                        {u.fullName}{" "}
+                        {u.nickname ? (
+                          <span className="text-xs font-semibold text-[#4C9A2A]">
+                            ({u.nickname})
+                          </span>
+                        ) : null}
                       </div>
                       <div className="text-[#4C9A2A] font-bold font-mono">
-                        {u.phone} · <span className="font-sans">{u.gender}</span>
+                        {u.phone} ·{" "}
+                        <span className="font-sans">
+                          {u.gender === "Perempuan" ? "Wanita" : u.gender === "Laki-laki" ? "Pria" : u.gender || "Pria"}
+                        </span>
                       </div>
-                      <div className="text-[#0D5C91]/80">{u.address}</div>
+                      {u.email && (
+                        <div className="text-[#0D5C91]/80">
+                          <strong>Email:</strong> {u.email}
+                        </div>
+                      )}
+                      <div className="text-[#0D5C91]/90">
+                        <strong>Alamat:</strong> {u.address || "-"}
+                      </div>
+                      {u.landmark && (
+                        <div className="text-[#0D5C91]/80">
+                          <strong>Patokan:</strong> {u.landmark}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() =>
                       onCopyText(
-                        `${u.fullName} - ${u.phone} - ${u.address}`,
+                        `Nama: ${u.fullName} (${u.nickname || "-"}) | HP: ${u.phone} | Gender: ${u.gender || "-"} | Email: ${u.email || "-"} | Alamat: ${u.address || "-"} | Patokan: ${u.landmark || "-"}`,
                         "Data pengguna"
                       )
                     }
@@ -523,33 +575,75 @@ export function AdminScreen({
         )}
 
         {adminTab === 2 && (
-          <div className="max-w-xl bg-white border border-[#0D5C91]/25 rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center gap-2 text-[#0D5C91] font-bold text-base">
-              <Settings className="w-5 h-5 text-[#4C9A2A]" />
-              <h2>Pengaturan Nomor WhatsApp Customer Service</h2>
-            </div>
-            <p className="text-xs text-[#0D5C91] leading-relaxed">
-              Nomor WhatsApp ini digunakan sebagai tujuan otomatis saat pelanggan menekan tombol <strong>Pesan & Konfirmasi ke WhatsApp CS</strong>. Gunakan awalan kode negara <code className="font-mono font-bold text-[#4C9A2A]">62</code>.
-            </p>
-            <form onSubmit={handleSaveWa} className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-[#0D5C91] mb-1">
-                  Nomor WhatsApp CS (Format 628xxx)
-                </label>
-                <input
-                  type="tel"
-                  value={waInput}
-                  onChange={(e) => setWaInput(e.target.value)}
-                  className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2.5 text-sm text-[#0D5C91] font-mono focus:outline-none focus:border-[#4C9A2A]"
-                />
+          <div className="max-w-xl space-y-5">
+            <div className="bg-white border border-[#0D5C91]/25 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 text-[#0D5C91] font-bold text-base">
+                <Settings className="w-5 h-5 text-[#4C9A2A]" />
+                <h2>Pengaturan Nomor WhatsApp Customer Service</h2>
               </div>
-              <button
-                type="submit"
-                className="px-4 py-2.5 bg-[#4C9A2A] hover:bg-[#0D5C91] text-white rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                Simpan Nomor WhatsApp CS
-              </button>
-            </form>
+              <p className="text-xs text-[#0D5C91] leading-relaxed">
+                Nomor WhatsApp ini digunakan sebagai tujuan otomatis saat pelanggan menekan tombol <strong>Pesan & Konfirmasi ke WhatsApp CS</strong>. Gunakan awalan kode negara <code className="font-mono font-bold text-[#4C9A2A]">62</code>.
+              </p>
+              <form onSubmit={handleSaveWa} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Nomor WhatsApp CS (Format 628xxx)
+                  </label>
+                  <input
+                    type="tel"
+                    value={waInput}
+                    onChange={(e) => setWaInput(e.target.value)}
+                    className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2.5 text-sm text-[#0D5C91] font-mono focus:outline-none focus:border-[#4C9A2A]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-[#4C9A2A] hover:bg-[#0D5C91] text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Simpan Nomor WhatsApp CS
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-white border border-[#0D5C91]/25 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[#0D5C91] font-bold text-base">
+                  <Lock className="w-5 h-5 text-[#0D5C91]" />
+                  <h2>Keamanan Akun Administrator</h2>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#E6F2FA] border border-[#0D5C91]/25 text-[#0D5C91] text-xs font-bold">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Terkunci Permanen</span>
+                </span>
+              </div>
+              <p className="text-xs text-[#0D5C91]/85 leading-relaxed">
+                Sesuai kebijakan keamanan sistem <strong>Mitra NetraQu</strong>, kredensial Email dan Password untuk akun <strong>Administrator</strong> dan <strong>Akun Demo</strong> dikunci dan tidak dapat diubah.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Email Administrator :
+                  </label>
+                  <input
+                    type="email"
+                    value="admin@mitranetraqu.id"
+                    disabled
+                    className="w-full bg-slate-100 border border-slate-300 rounded-xl px-3.5 py-2 text-sm text-slate-500 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#0D5C91] mb-1">
+                    Password / PIN Administrator :
+                  </label>
+                  <input
+                    type="password"
+                    value="198006"
+                    disabled
+                    className="w-full bg-slate-100 border border-slate-300 rounded-xl px-3.5 py-2 text-sm text-slate-500 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>

@@ -47,7 +47,9 @@ const CAROUSEL_SLIDES = [
 interface AuthScreenProps {
   users: UserProfile[];
   ttsGender: "pria" | "wanita";
+  ttsSpeed: "lambat" | "sedang" | "cepat";
   onChangeTtsGender: (gender: "pria" | "wanita") => void;
+  onChangeTtsSpeed: (speed: "lambat" | "sedang" | "cepat") => void;
   onLoginSuccess: (user: UserProfile, welcomeMessage: string) => void;
   onRegisterUser: (newUser: UserProfile) => void;
   onShowToast: (msg: string) => void;
@@ -58,7 +60,9 @@ interface AuthScreenProps {
 export function AuthScreen({
   users,
   ttsGender,
+  ttsSpeed,
   onChangeTtsGender,
+  onChangeTtsSpeed,
   onLoginSuccess,
   onRegisterUser,
   onShowToast,
@@ -91,6 +95,7 @@ export function AuthScreen({
   // Register form state
   const [regName, setRegName] = useState("");
   const [regPhone, setRegPhone] = useState("");
+  const [regEmail, setRegEmail] = useState("");
   const [regPin, setRegPin] = useState("");
   const [regGender, setRegGender] = useState<"Laki-laki" | "Perempuan">("Laki-laki");
   const [regAddress, setRegAddress] = useState("");
@@ -149,10 +154,11 @@ export function AuthScreen({
       fullName,
       phone,
       pin,
-      gender: regGender,
+      gender: regGender === "Perempuan" ? "Wanita" : "Pria",
       address,
-      email: "",
-      photoUri: ""
+      email: regEmail.trim(),
+      photoUri: "",
+      isDemo: false
     };
 
     onRegisterUser(newUser);
@@ -225,6 +231,28 @@ export function AuthScreen({
               >
                 Suara Wanita
               </button>
+            </div>
+
+            {/* Pilihan Kecepatan Suara TTS (Lambat / Sedang / Cepat) */}
+            <div
+              className="inline-flex items-center bg-[#EAF6E5] border border-[#4C9A2A]/25 rounded-lg p-0.5 text-xs font-bold"
+              role="group"
+              aria-label="Pilih Kecepatan Suara Pembaca Layar"
+            >
+              {(["lambat", "sedang", "cepat"] as const).map((spd) => (
+                <button
+                  key={spd}
+                  type="button"
+                  onClick={() => onChangeTtsSpeed(spd)}
+                  className={`px-2 py-1.5 rounded-md capitalize transition cursor-pointer whitespace-nowrap ${
+                    ttsSpeed === spd
+                      ? "bg-[#4C9A2A] text-white shadow-2xs"
+                      : "text-[#0D5C91] hover:bg-[#4C9A2A]/15"
+                  }`}
+                >
+                  {spd}
+                </button>
+              ))}
             </div>
 
             <button
@@ -368,7 +396,7 @@ export function AuthScreen({
                     <span>Etika Terapis</span>
                   </div>
                   <div className="text-xs text-[#0D5C91] font-bold">Sesuai Jenis Kelamin</div>
-                  <div className="text-xs text-[#4C9A2A] font-medium">Maksimal 3 peserta/sesi</div>
+                  <div className="text-xs text-[#4C9A2A] font-medium">Maks. 3 Pria & 3 Wanita</div>
                 </div>
               </div>
 
@@ -562,6 +590,22 @@ export function AuthScreen({
                           onChange={(e) => setRegPhone(e.target.value)}
                           placeholder="Contoh: 081234567890"
                           className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91] font-mono focus:outline-none focus:border-[#4C9A2A]"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="regEmail"
+                          className="block text-xs font-bold text-[#0D5C91] mb-1"
+                        >
+                          Email (Opsional)
+                        </label>
+                        <input
+                          id="regEmail"
+                          type="email"
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          placeholder="Contoh: nama@gmail.com"
+                          className="w-full bg-white border border-[#0D5C91]/30 rounded-xl px-3.5 py-2 text-sm text-[#0D5C91] focus:outline-none focus:border-[#4C9A2A]"
                         />
                       </div>
                       <div>

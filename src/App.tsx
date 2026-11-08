@@ -64,6 +64,12 @@ export default function App() {
     const saved = localStorage.getItem("mnq_tts_gender");
     return saved === "pria" || saved === "wanita" ? saved : "pria";
   });
+  const [ttsSpeed, setTtsSpeed] = useState<"lambat" | "sedang" | "cepat">(() => {
+    const saved = localStorage.getItem("mnq_tts_speed");
+    return saved === "lambat" || saved === "sedang" || saved === "cepat"
+      ? saved
+      : "sedang";
+  });
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -111,8 +117,18 @@ export default function App() {
     }
   }, []);
 
+  const getPlaybackRateValue = (speed: "lambat" | "sedang" | "cepat"): number => {
+    if (speed === "lambat") return 0.78;
+    if (speed === "cepat") return 1.28;
+    return 1.0;
+  };
+
   const speakBrowserFallback = useCallback(
-    (text: string, activeGender: "pria" | "wanita") => {
+    (
+      text: string,
+      activeGender: "pria" | "wanita",
+      activeSpeed: "lambat" | "sedang" | "cepat"
+    ) => {
       if (typeof window === "undefined" || !("speechSynthesis" in window)) {
         return;
       }
@@ -184,13 +200,14 @@ export default function App() {
         utter.voice = chosenVoice;
       }
 
+      const speedFactor = getPlaybackRateValue(activeSpeed);
+
       if (activeGender === "pria") {
-        // Gentleman baritone cadence: calm, deep, composed, and authoritative
         utter.pitch = hasDedicatedMaleVoice ? 0.82 : 0.72;
-        utter.rate = 0.91;
+        utter.rate = Number((0.92 * speedFactor).toFixed(2));
       } else {
         utter.pitch = 1.1;
-        utter.rate = 1.0;
+        utter.rate = Number((1.0 * speedFactor).toFixed(2));
       }
 
       window.speechSynthesis.speak(utter);
@@ -199,8 +216,14 @@ export default function App() {
   );
 
   const speakText = useCallback(
-    async (text: string, genderOverride?: "pria" | "wanita") => {
+    async (
+      text: string,
+      genderOverride?: "pria" | "wanita",
+      speedOverride?: "lambat" | "sedang" | "cepat"
+    ) => {
       const activeGender = genderOverride || ttsGender;
+      const activeSpeed = speedOverride || ttsSpeed;
+      const playbackRate = getPlaybackRateValue(activeSpeed);
       stopSpeak();
 
       const cacheKey = `${activeGender}::${text.trim()}`;
@@ -208,6 +231,7 @@ export default function App() {
       if (cachedDataUrl) {
         try {
           const audio = new Audio(cachedDataUrl);
+          audio.playbackRate = playbackRate;
           activeAudioRef.current = audio;
           await audio.play();
           return;
@@ -243,6 +267,7 @@ export default function App() {
           const dataUrl = `data:${mime};base64,${data.audioBase64}`;
           audioCacheRef.current.set(cacheKey, dataUrl);
           const audio = new Audio(dataUrl);
+          audio.playbackRate = playbackRate;
           activeAudioRef.current = audio;
           await audio.play();
           return;
@@ -252,10 +277,10 @@ export default function App() {
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
-        speakBrowserFallback(text, activeGender);
+        speakBrowserFallback(text, activeGender, activeSpeed);
       }
     },
-    [ttsGender, stopSpeak, speakBrowserFallback]
+    [ttsGender, ttsSpeed, stopSpeak, speakBrowserFallback]
   );
 
   const handleChangeTtsGender = useCallback(
@@ -267,9 +292,20 @@ export default function App() {
           ? "suara diubah menjadi suara pria"
           : "suara diubah menjadi suara wanita";
       setToastMsg(msg);
-      speakText(msg, newGender);
+      speakText(msg, newGender, ttsSpeed);
     },
-    [speakText]
+    [speakText, ttsSpeed]
+  );
+
+  const handleChangeTtsSpeed = useCallback(
+    (newSpeed: "lambat" | "sedang" | "cepat") => {
+      setTtsSpeed(newSpeed);
+      localStorage.setItem("mnq_tts_speed", newSpeed);
+      const msg = `kecepatan suara diubah menjadi ${newSpeed}`;
+      setToastMsg(msg);
+      speakText(msg, ttsGender, newSpeed);
+    },
+    [speakText, ttsGender]
   );
 
   const showToast = useCallback(
@@ -324,12 +360,30 @@ export default function App() {
     showToast("Pesanan " + newOrder.orderId + " berhasil dibuat!");
   };
 
-  const handleUpdateUser = (updated: UserProfile, toastMessage?: string) => {
+  const handleUpdateUser = (
+    updated: UserProfile,
+    toastMessage?: string,
+    previousPhone?: string
+  ) => {
+    const matchPhone = previousPhone || updated.phone;
     setCurrentUser(updated);
     localStorage.setItem("mnq_current_user", JSON.stringify(updated));
     setUsers((prev) =>
-      prev.map((u) => (u.phone === updated.phone ? updated : u))
+      prev.map((u) => (u.phone === matchPhone ? updated : u))
     );
+    if (previousPhone && previousPhone !== updated.phone) {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.customerPhone === previousPhone
+            ? {
+                ...o,
+                customerPhone: updated.phone,
+                customerName: updated.fullName
+              }
+            : o
+        )
+      );
+    }
     if (toastMessage) {
       showToast(toastMessage);
     }
@@ -365,7 +419,9 @@ export default function App() {
         <AuthScreen
           users={users}
           ttsGender={ttsGender}
+          ttsSpeed={ttsSpeed}
           onChangeTtsGender={handleChangeTtsGender}
+          onChangeTtsSpeed={handleChangeTtsSpeed}
           onLoginSuccess={handleLoginSuccess}
           onRegisterUser={handleRegisterUser}
           onShowToast={showToast}
@@ -378,7 +434,9 @@ export default function App() {
           users={users}
           csWhatsApp={csWhatsApp}
           ttsGender={ttsGender}
+          ttsSpeed={ttsSpeed}
           onChangeTtsGender={handleChangeTtsGender}
+          onChangeTtsSpeed={handleChangeTtsSpeed}
           onUpdateOrderStatus={handleUpdateOrderStatus}
           onUpdateCsWhatsApp={handleUpdateCsWhatsApp}
           onCopyText={copyText}
@@ -393,7 +451,9 @@ export default function App() {
           csWhatsApp={csWhatsApp}
           ttsEnabled={ttsEnabled}
           ttsGender={ttsGender}
+          ttsSpeed={ttsSpeed}
           onChangeTtsGender={handleChangeTtsGender}
+          onChangeTtsSpeed={handleChangeTtsSpeed}
           onToggleTts={() => {
             const next = !ttsEnabled;
             setTtsEnabled(next);

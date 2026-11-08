@@ -61,8 +61,9 @@ function getFirstNameInitial(fullName: string): string {
     .trim()
     .replace(/^(bpk\.?|bapak|ibu|bu\.?|sdr\.?|sdri\.?|tn\.?|ny\.?)\s+/i, "")
     .trim();
-  const firstChar = (cleaned || fullName || "P").trim().charAt(0).toUpperCase();
-  return firstChar || "P";
+  const firstWord = (cleaned || fullName || "PL").trim().split(/\s+/)[0] || "PL";
+  const twoChars = firstWord.slice(0, 2).toUpperCase();
+  return twoChars || "PL";
 }
 
 export function UserAvatar({
@@ -78,21 +79,21 @@ export function UserAvatar({
 
   const dimensions =
     size === "lg"
-      ? "w-24 h-24 text-4xl"
+      ? "w-24 h-24 text-3xl"
       : size === "sm"
-      ? "w-11 h-11 text-base"
-      : "w-14 h-14 text-xl";
+      ? "w-11 h-11 text-sm"
+      : "w-14 h-14 text-lg";
 
   const hasCustomPhoto = Boolean(photoUri && photoUri.trim() && !imgError);
-  const initialLetter = getFirstNameInitial(name);
+  const initialLetters = getFirstNameInitial(name);
 
   if (!hasCustomPhoto) {
     return (
       <div
         aria-label={`Avatar ${name}`}
-        className={`${dimensions} rounded-full bg-[#0D5C91] text-white font-extrabold border-2 border-[#0D5C91] shadow-xs shrink-0 flex items-center justify-center select-none uppercase leading-none`}
+        className={`${dimensions} rounded-full bg-[#0D5C91] text-white font-extrabold tracking-tight border-2 border-[#0D5C91] shadow-xs shrink-0 flex items-center justify-center select-none uppercase leading-none`}
       >
-        {initialLetter}
+        {initialLetters}
       </div>
     );
   }

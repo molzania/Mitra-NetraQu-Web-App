@@ -137,13 +137,28 @@ export const ORDER_STATUSES: OrderStatusMeta[] = [
 
 export interface UserProfile {
   fullName: string;
+  nickname?: string;
   phone: string;
   pin?: string;
-  gender?: "Laki-laki" | "Perempuan";
+  gender?: "Pria" | "Wanita" | "Laki-laki" | "Perempuan";
   email?: string;
   address?: string;
+  landmark?: string;
   photoUri?: string;
   isAdmin?: boolean;
+  isDemo?: boolean;
+}
+
+export const DEMO_PHONES = ["081271829911", "082199887766"];
+
+export function isDemoOrAdminUser(user?: UserProfile | null): boolean {
+  if (!user) return false;
+  return Boolean(
+    user.isAdmin ||
+      user.isDemo ||
+      user.phone === ADMIN_PHONE ||
+      DEMO_PHONES.includes(user.phone)
+  );
 }
 
 export interface OrderRecord {
@@ -158,6 +173,7 @@ export interface OrderRecord {
   totalParticipants: number;
   locationType: "Datang ke Lokasi Pijat" | "Panggilan ke Rumah";
   serviceAddress: string;
+  customMessage?: string;
   totalPayment: number;
   status: OrderStatusCode;
 }
@@ -170,6 +186,7 @@ export interface BookingDraft {
   timeSlot: string;
   locationType: "Datang ke Lokasi Pijat" | "Panggilan ke Rumah";
   customAddress: string;
+  customMessage: string;
 }
 
 export function getInitialOrders(todayIso: string): OrderRecord[] {
@@ -186,6 +203,7 @@ export function getInitialOrders(todayIso: string): OrderRecord[] {
       totalParticipants: 1,
       locationType: "Panggilan ke Rumah",
       serviceAddress: "Jl. Sudirman No. 45, Ilir Timur I, Palembang",
+      customMessage: "Fokus pijat area bahu dan punggung bawah karena pegal.",
       totalPayment: 200000,
       status: "PENDING_CONFIRMATION"
     },
@@ -201,6 +219,7 @@ export function getInitialOrders(todayIso: string): OrderRecord[] {
       totalParticipants: 2,
       locationType: "Datang ke Lokasi Pijat",
       serviceAddress: OUTLET_ADDRESS,
+      customMessage: "Tekanan pijatan sedang saja.",
       totalPayment: 400000,
       status: "CONFIRMED"
     }
@@ -210,21 +229,27 @@ export function getInitialOrders(todayIso: string): OrderRecord[] {
 export const INITIAL_USERS: UserProfile[] = [
   {
     fullName: "Bpk. Hendra Wijaya",
+    nickname: "Hendra",
     phone: "081271829911",
     pin: "123456",
-    gender: "Laki-laki",
+    gender: "Pria",
     email: "hendra.wijaya@gmail.com",
     address: "Jl. Sudirman No. 45, Ilir Timur I, Palembang",
-    photoUri: ""
+    landmark: "Seberang Rumah Sakit Charitas Palembang",
+    photoUri: "",
+    isDemo: true
   },
   {
     fullName: "Ibu Siti Nurhaliza",
+    nickname: "Siti",
     phone: "082199887766",
     pin: "123456",
-    gender: "Perempuan",
+    gender: "Wanita",
     email: "sitinurhaliza.plg@gmail.com",
     address: "Jl. Demang Lebar Daun No. 88, Palembang",
-    photoUri: ""
+    landmark: "Samping Griya Agung Palembang",
+    photoUri: "",
+    isDemo: true
   }
 ];
 
@@ -237,6 +262,9 @@ export function getStatusObj(code: string): OrderStatusMeta {
 }
 
 export function buildWhatsAppMessage(order: OrderRecord): string {
+  const noteLine = order.customMessage?.trim()
+    ? `\n• Pesan Tambahan: ${order.customMessage.trim()}`
+    : "";
   return `Halo CS Mitra NetraQu Palembang, saya ingin konfirmasi pemesanan pijat:
 • No. Pesanan: ${order.orderId}
 • Nama Pemesan: ${order.customerName}
@@ -244,6 +272,6 @@ export function buildWhatsAppMessage(order: OrderRecord): string {
 • Jadwal: ${order.bookingDate} jam ${order.timeSlot}
 • Layanan: ${order.servicesSummary}
 • Peserta: ${order.maleCount} Pria, ${order.femaleCount} Wanita
-• Lokasi: ${order.locationType} (${order.serviceAddress})
+• Lokasi: ${order.locationType} (${order.serviceAddress})${noteLine}
 • Total Biaya: ${formatRupiah(order.totalPayment)}`;
 }
