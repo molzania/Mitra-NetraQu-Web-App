@@ -8,12 +8,12 @@ export const MITRA_FULL_LOGO_IMAGE =
 export function MitraNetraLogo({ className = "" }: { className?: string }) {
   return (
     <div className={`inline-flex items-center gap-3.5 select-none ${className}`}>
-      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border-2 border-[#0D5C91]/25 shadow-xs shrink-0 flex items-center justify-center">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-white border-2 border-[#0D5C91]/25 shadow-xs shrink-0 flex items-center justify-center relative">
         <img
           src={MITRA_ICON_IMAGE}
           alt="Icon Mitra NetraQu Palembang"
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover object-[50%_42%] scale-[1.45]"
+          className="w-full h-full object-cover object-center origin-center translate-y-[14%] scale-[1.55] transform-gpu"
         />
       </div>
       <div className="text-left leading-tight">
@@ -28,14 +28,16 @@ export function MitraNetraLogo({ className = "" }: { className?: string }) {
   );
 }
 
-export function MitraNetraFullLogo({ className = "w-[88%] sm:w-[85%]" }: { className?: string }) {
+export function MitraNetraFullLogo({ className = "w-full" }: { className?: string }) {
   return (
-    <div className={`overflow-hidden flex items-center justify-center select-none ${className}`}>
+    <div
+      className={`overflow-hidden flex items-center justify-center mx-auto select-none ${className}`}
+    >
       <img
         src={MITRA_FULL_LOGO_IMAGE}
         alt="Logo Mitra NetraQu - Jasa Pijat Terapis Tuna Netra"
         referrerPolicy="no-referrer"
-        className="w-full h-auto object-contain scale-[1.28] transform-gpu"
+        className="w-full h-auto object-contain object-center origin-center scale-[1.32] transform-gpu mx-auto"
       />
     </div>
   );
@@ -64,15 +66,15 @@ export function UserAvatar({
 
   return (
     <div
-      className={`${dimensions} rounded-full overflow-hidden border-2 border-[#0D5C91] bg-white shrink-0 flex items-center justify-center`}
+      className={`${dimensions} rounded-full overflow-hidden border-2 border-[#0D5C91] bg-white shrink-0 flex items-center justify-center relative`}
     >
       <img
         src={resolvedSrc}
         alt={name}
         referrerPolicy="no-referrer"
         onError={() => setImgError(true)}
-        className={`w-full h-full object-cover ${
-          isDefaultIcon ? "object-[50%_42%] scale-[1.45]" : "object-center"
+        className={`w-full h-full object-cover object-center origin-center transform-gpu ${
+          isDefaultIcon ? "translate-y-[14%] scale-[1.55]" : ""
         }`}
       />
     </div>
